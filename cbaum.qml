@@ -22,7 +22,8 @@ MuseScore {
   property bool showNames: false
   property bool showFingering: false
   property string currentLayout: "C-griff Eu"
-  property int tooltipDelay: 377
+  property int rowLeftMargin: 7
+  property int tooltipDelay: 777 
 
   readonly property var chordMap: {
    // stradella only 
@@ -55,7 +56,6 @@ MuseScore {
     "0,4,7,11,14": "Maj9",
     "0,4,7,11,14,21": "Maj13"
   }
-
   function identifyChord(pitches) {
     var noteNames = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
     // remove duplicates & normalize to single octave
@@ -113,19 +113,50 @@ MuseScore {
       anchors.fill: parent
       anchors.margins: 3
       spacing: 10
-      // row 1 : chord identification
+      // row 1 : chord identified
       RowLayout {
         Layout.fillWidth: true
+        Layout.leftMargin:rowLeftMargin 
         spacing: 10
+        Label {
+          text: qsTr("found :")
+          ToolTip.text: qsTr("chord identified from selected notes\ncan be added to notes")
+          ToolTip.visible: hovered
+          ToolTip.delay:tooltipDelay 
+          color:"white"
+        }
+        TextField {
+          id: foundChordTextField
+          text: qsTr("none")
+          Layout.fillWidth: true
+          color: "dodgerblue"
+          readOnly: true
+          selectByMouse: true
+          background: Rectangle { color: "transparent" }
+        }
+      }
+      // row 2
+      RowLayout {
+        Layout.fillWidth: true
+        Layout.leftMargin: rowLeftMargin 
+        spacing: 12
+        // identify chord from selected notes
         Button {
           text: qsTr("get chord")
           ToolTip.text: qsTr("get chord from selected notes - min 3")
           ToolTip.visible: hovered
           ToolTip.delay: tooltipDelay
-          // ToolTip.timeout:
           onClicked: getSelectedPitch()
         }
-        // identify all vs stradella
+        // add identified chord as staff text above selected notes
+        Button {
+          text: qsTr("add as text")
+          ToolTip.text: qsTr("add identified chord to selected notes")
+          ToolTip.visible: hovered
+          ToolTip.delay: tooltipDelay 
+          onClicked: addChordText()
+        }
+        // identify all vs stradella stradella only chords
         CheckBox {
         text: qsTr("all")
         ToolTip.text: qsTr("identify all vs default stradella only chords")
@@ -140,33 +171,12 @@ MuseScore {
           verticalAlignment: Text.AlignVCenter
           }
         }
-        Label {
-          text: qsTr("found :")
-          ToolTip.text: qsTr("chord identified from selected notes\ncan be added to notes")
-          ToolTip.visible: hovered
-          ToolTip.delay:tooltipDelay 
-          color:"white"
-        }
-        Label {
-          id: foundChordLabel
-          text: qsTr("none")
-          Layout.fillWidth: true
-          color: "dodgerblue"
-        }
-        // add identified chord as staff text over selected notes
-        Button {
-          text: qsTr("add")
-          ToolTip.text: qsTr("add identified chord to selected notes")
-          ToolTip.visible: hovered
-          ToolTip.delay: tooltipDelay 
-          onClicked: addChordText()
-        }
       }
-      // row 2 : layout selection +
+      // row 3 : layout selection +
       RowLayout {
         Layout.fillWidth: true
+        Layout.leftMargin: rowLeftMargin 
         spacing: 5
-        // Label { text: "layout"; color: "#888"; font.pixelSize: 12 }
         ComboBox {
           id: layoutSelector
           ToolTip.text: qsTr("select desired treble layout")
@@ -184,7 +194,7 @@ MuseScore {
           onActivated: currentLayout = currentText
         }
       }
-      // row 3 : buttonboard scheme
+      // row 4 : buttonboard scheme
       Rectangle {
         id: boardContainer
         Layout.fillWidth: true
