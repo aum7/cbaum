@@ -16,7 +16,7 @@ MuseScore {
     console.log("running cba ...")
   }
 
-  property bool allChordsMode: false
+  // property bool allChordsMode: false
   property bool meloBassMode: false
   property bool showRight: false
   property bool showNames: false
@@ -65,7 +65,6 @@ MuseScore {
       if (normalized.indexOf(p) === -1) normalized.push(p)
     }
     normalized.sort(function(a, b) { return a - b })
-    // todo : split recognition to stradella vs all
     // test notes for potential root
     for (var r = 0; r < normalized.length; r++) {
       var root = normalized[r]
@@ -94,11 +93,11 @@ MuseScore {
       }
     }
     if (pitches.length < 3) {
-      chordLabel.text = qsTr("select 3+ notes")
+      foundChordTextField.text = qsTr("select 3+ notes")
       return
     }
     pitches.sort(function(a, b) { return a - b })
-    chordLabel.text = identifyChord(pitches) 
+    foundChordTextField.text = identifyChord(pitches) 
     // console.log("selected : " + result)
   }
   function addChordText() {
@@ -113,32 +112,11 @@ MuseScore {
       anchors.fill: parent
       anchors.margins: 3
       spacing: 10
-      // row 1 : chord identified
-      RowLayout {
-        Layout.fillWidth: true
-        Layout.leftMargin:rowLeftMargin 
-        spacing: 10
-        Label {
-          text: qsTr("found :")
-          ToolTip.text: qsTr("chord identified from selected notes\ncan be added to notes")
-          ToolTip.visible: hovered
-          ToolTip.delay:tooltipDelay 
-          color:"white"
-        }
-        TextField {
-          id: foundChordTextField
-          text: qsTr("none")
-          Layout.fillWidth: true
-          color: "dodgerblue"
-          readOnly: true
-          selectByMouse: true
-          background: Rectangle { color: "transparent" }
-        }
-      }
-      // row 2
+      // row 1 : identify chord buttons & text
       RowLayout {
         Layout.fillWidth: true
         Layout.leftMargin: rowLeftMargin 
+        Layout.rightMargin: rowLeftMargin 
         spacing: 12
         // identify chord from selected notes
         Button {
@@ -148,6 +126,19 @@ MuseScore {
           ToolTip.delay: tooltipDelay
           onClicked: getSelectedPitch()
         }
+        // identifed chord text
+        TextField {
+          id: foundChordTextField
+          text: qsTr("none")
+          ToolTip.text: qsTr("chord identified from selected notes\ncan be added to notes as text")
+          ToolTip.visible: hovered
+          ToolTip.delay:tooltipDelay 
+          Layout.fillWidth: true
+          color: "dodgerblue"
+          readOnly: true
+          selectByMouse: true
+          background: Rectangle { color: "transparent" }
+        }
         // add identified chord as staff text above selected notes
         Button {
           text: qsTr("add as text")
@@ -156,21 +147,34 @@ MuseScore {
           ToolTip.delay: tooltipDelay 
           onClicked: addChordText()
         }
-        // identify all vs stradella stradella only chords
+      }
+      // row 2 : checkboxes
+      RowLayout {
+        Layout.fillWidth: true
+        Layout.leftMargin:rowLeftMargin 
+        spacing: 10
+        // use free bas for chord presentation
         CheckBox {
-        text: qsTr("all")
-        ToolTip.text: qsTr("identify all vs default stradella only chords")
+        text: qsTr("melo bass")
+        ToolTip.text: qsTr("use melodic / free bass layout")
         ToolTip.visible: hovered
         ToolTip.delay:tooltipDelay 
-        checked: allChordsMode
-        onCheckedChanged: allChordsMode = checked
+        checked: meloBassMode 
+        onCheckedChanged: meloBassMode = checked
         contentItem: Text {
           text: parent.text
           color: "white"
-          leftPadding: 22
+          leftPadding: 17 
           verticalAlignment: Text.AlignVCenter
           }
         }
+        // Label {
+        //   text: qsTr("found :")
+        //   ToolTip.text: qsTr("chord identified from selected notes\ncan be added to notes")
+        //   ToolTip.visible: hovered
+        //   ToolTip.delay:tooltipDelay 
+        //   color:"white"
+        // }
       }
       // row 3 : layout selection +
       RowLayout {
