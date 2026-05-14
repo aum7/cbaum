@@ -23,6 +23,7 @@ MuseScore {
   property bool showFingering: false
   property string currentLayout: "C-griff Eu"
   property int rowLeftMargin: 7
+  property int rowLeftPadding: 22
   property int tooltipDelay: 777 
 
   readonly property var chordMap: {
@@ -114,7 +115,7 @@ MuseScore {
       RowLayout {
         Layout.fillWidth: true
         Layout.leftMargin: rowLeftMargin 
-        Layout.rightMargin: rowLeftMargin 
+        // Layout.rightMargin: rowLeftMargin 
         spacing: 12
         // identify chord from selected notes
         Button {
@@ -150,24 +151,22 @@ MuseScore {
       RowLayout {
         Layout.fillWidth: true
         Layout.leftMargin: rowLeftMargin 
-        Layout.rightMargin: rowLeftMargin 
+        // Layout.rightMargin: rowLeftMargin 
         spacing: 10
         // use free bass for chord presentation
         CheckBox {
         id: meloBassCbx
         checked: meloBassMode 
         onCheckedChanged: meloBassMode = checked
-
-        Layout.preferredWidth: 32
-        Layout.preferredHeight: 32
-        // text: qsTr("MB")
+        text: qsTr("MB")
         ToolTip.text: qsTr("present as melodic / free bass chord")
         ToolTip.visible: hovered
         ToolTip.delay: tooltipDelay 
-        contentItem: Image {
-          source: "imgs/melobass.svg"
-          sourceSize.width: 24
-          sourceSize.height: 24
+        contentItem: Text {
+        text: parent.text
+        color: "white"
+        leftPadding: rowLeftPadding 
+        verticalAlignment: Text.AlignVCenter
           }
         }
         // show right treble : todo : let be replaced by revealer widget <->
@@ -181,7 +180,7 @@ MuseScore {
         contentItem: Text {
           text: parent.text
           color: "white"
-          leftPadding: 17 
+          leftPadding: rowLeftPadding 
           verticalAlignment: Text.AlignVCenter
           }
         }
@@ -196,11 +195,11 @@ MuseScore {
         contentItem: Text {
           text: parent.text
           color: "white"
-          leftPadding: 17 
+          leftPadding: rowLeftPadding
           verticalAlignment: Text.AlignVCenter
           }
         } 
-        // show fingering
+        // show fingering todo : should be button ???
         CheckBox {
         text: qsTr("fingering")
         ToolTip.text: qsTr("check or add fingering to treble part")
@@ -211,7 +210,7 @@ MuseScore {
         contentItem: Text {
           text: parent.text
           color: "white"
-          leftPadding: 17 
+          leftPadding: rowLeftPadding
           verticalAlignment: Text.AlignVCenter
           }
         } 
@@ -223,7 +222,7 @@ MuseScore {
         spacing: 5
         ComboBox {
           id: layoutSelector
-          ToolTip.text: qsTr("select desired treble layout")
+          ToolTip.text: qsTr("select treble layout")
           ToolTip.visible: hovered
           ToolTip.delay:tooltipDelay 
           Layout.preferredWidth: 120
