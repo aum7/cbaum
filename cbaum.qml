@@ -21,7 +21,7 @@ MuseScore {
   property bool showTreble: false
   property bool showButtonTones: false
   property bool showFingering: false
-  property string currentLayout: "C-griff Eu"
+  property string currentLayout: "C-griff Europe"
   property int rowLeftMargin: 7
   property int textLeftPadding: 19 
   property int tooltipDelay: 777 
@@ -30,7 +30,16 @@ MuseScore {
   property int buttonSize: 26
   property int buttonSpacing: 4
   property int buttonFontSize: 22 
-  // property var activePitches: []  // dynamic by ms selection / playback
+  // buttonboard layouts
+  property var layouts: [ // name, lowest note, offset from lowest = start MIDI
+    { name: "C-griff Europe",start: 55, offset: [0, -1, 1, 0, 2] }, 
+    { name: "C-griff 2", start: 56, offset: [3, 1, 2, 0, 1] },
+    { name: "B-griff Bayan", start: 55, offset: [3, 1, 2, 0, 1] }, 
+    { name: "B-griff Finland", start: 55, offset: [1, 0, 2, 1, 3] },
+    { name: "D-griff 1", start: 53, offset: [1, 0, 2, 1, 3] },
+    { name: "D-griff 2", start: 55, offset: [2, 0, 1, -1, 0] } // todo
+  ]
+  property var selectedLayout: layouts[0]
   readonly property var chordMap: {
    // stradella
     "0,4,7": "major",
@@ -62,13 +71,11 @@ MuseScore {
     "0,4,7,11,14": "Maj9",
     "0,4,7,11,14,21": "Maj13"
   }
-  function calculatePitch(row, col) {
-    // start 52
-    var g3 = 55
-    // semitone offset for 1st button of each column
-    var offset = [0, -1, 1, 0, 2]
-    // starting pitch of columns
-    return (g3 + offset[col]) + (row * 3)
+  function mapButtonToMidi(row, col) {
+    var base = selectedLayout.start
+    var off = selectedLayout.offset[col]
+    // var step todo skip / delete ???
+    return (base + off) + (row * 3)
   }
   function isBlackButton(pitch) {
     var p = pitch % 12
@@ -257,15 +264,9 @@ MuseScore {
           ToolTip.visible: hovered
           ToolTip.delay:tooltipDelay 
           Layout.preferredWidth: 120
-          // width: parent.width
-          model: [
-            "C-griff Eu",
-            "C-griff 2",
-            "B-griff Bayan",
-            "B-griff Fin", 
-            "D-griff 1",
-            "D-griff 2"]
-          onActivated: currentLayout = currentText
+          model: layouts
+          textRole: "name"
+          onActivated: selectedLayout = layouts[index]
         }
         // show fingering todo : should be button ???
         CheckBox {
@@ -315,7 +316,7 @@ MuseScore {
                       height: buttonSize
                       radius: buttonSize / 2 
                       // calculate pitch
-                      property int pitch: calculatePitch(index, colIndex)
+                      property int pitch: mapButtonToMidi(index, colIndex)
                       // determine button color
                       property bool black: isBlackButton(pitch)
                       color: black ? "#333333" : "#eeeeee"
@@ -323,8 +324,8 @@ MuseScore {
                       border.width: 1
                       Text {
                         anchors.centerIn: parent
-                        text: !isBlackButton(pitch) ? getNoteName(pitch) : ""
-                        visible: !isBlackButton(pitch) // only show naturals
+                        text: !black ? getNoteName(pitch) : ""
+                        visible: !isBlackButton(pitch) && showButtonTones // only show naturals
                         font.pixelSize: buttonFontSize
                         color: "black"
                       }
