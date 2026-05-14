@@ -18,8 +18,8 @@ MuseScore {
 
   // property bool allChordsMode: false
   property bool meloBassMode: false
-  property bool showRight: false
-  property bool showNames: false
+  property bool showTreble: false
+  property bool showButtonTones: false
   property bool showFingering: false
   property string currentLayout: "C-griff Eu"
   property int rowLeftMargin: 7
@@ -86,11 +86,9 @@ MuseScore {
       return
     }
     var elements = curScore.selection.elements
-      var pitches = []
+    var pitches = []
     for (var i = 0; i < elements.length; i++) {
-      if (elements[i].type === Element.NOTE) {
-        pitches.push(elements[i].pitch)
-      }
+      if (elements[i].type === Element.NOTE) pitches.push(elements[i].pitch)
     }
     if (pitches.length < 3) {
       foundChordTextField.text = qsTr("select 3+ notes")
@@ -132,7 +130,7 @@ MuseScore {
           text: qsTr("none")
           ToolTip.text: qsTr("chord identified from selected notes\ncan be added to notes as text")
           ToolTip.visible: hovered
-          ToolTip.delay:tooltipDelay 
+          ToolTip.delay: tooltipDelay 
           Layout.fillWidth: true
           color: "dodgerblue"
           readOnly: true
@@ -151,16 +149,35 @@ MuseScore {
       // row 2 : checkboxes
       RowLayout {
         Layout.fillWidth: true
-        Layout.leftMargin:rowLeftMargin 
+        Layout.leftMargin: rowLeftMargin 
+        Layout.rightMargin: rowLeftMargin 
         spacing: 10
-        // use free bas for chord presentation
+        // use free bass for chord presentation
         CheckBox {
-        text: qsTr("melo bass")
-        ToolTip.text: qsTr("use melodic / free bass layout")
-        ToolTip.visible: hovered
-        ToolTip.delay:tooltipDelay 
+        id: meloBassCbx
         checked: meloBassMode 
         onCheckedChanged: meloBassMode = checked
+
+        Layout.preferredWidth: 32
+        Layout.preferredHeight: 32
+        // text: qsTr("MB")
+        ToolTip.text: qsTr("present as melodic / free bass chord")
+        ToolTip.visible: hovered
+        ToolTip.delay: tooltipDelay 
+        contentItem: Image {
+          source: "imgs/melobass.svg"
+          sourceSize.width: 24
+          sourceSize.height: 24
+          }
+        }
+        // show right treble : todo : let be replaced by revealer widget <->
+        CheckBox {
+        text: qsTr("treble")
+        ToolTip.text: qsTr("show right treble vs default left bass buttonboard") 
+        ToolTip.visible: hovered
+        ToolTip.delay: tooltipDelay 
+        checked: showTreble
+        onCheckedChanged: showTreble = checked
         contentItem: Text {
           text: parent.text
           color: "white"
@@ -168,13 +185,36 @@ MuseScore {
           verticalAlignment: Text.AlignVCenter
           }
         }
-        // Label {
-        //   text: qsTr("found :")
-        //   ToolTip.text: qsTr("chord identified from selected notes\ncan be added to notes")
-        //   ToolTip.visible: hovered
-        //   ToolTip.delay:tooltipDelay 
-        //   color:"white"
-        // }
+        // show tone names on buttons
+        CheckBox {
+        text: qsTr("tones")
+        ToolTip.text: qsTr("show tone names on buttons")
+        ToolTip.visible: hovered
+        ToolTip.delay: tooltipDelay 
+        checked: showButtonTones
+        onCheckedChanged: showButtonTones = checked
+        contentItem: Text {
+          text: parent.text
+          color: "white"
+          leftPadding: 17 
+          verticalAlignment: Text.AlignVCenter
+          }
+        } 
+        // show fingering
+        CheckBox {
+        text: qsTr("fingering")
+        ToolTip.text: qsTr("check or add fingering to treble part")
+        ToolTip.visible: hovered
+        ToolTip.delay: tooltipDelay 
+        checked: showFingering
+        onCheckedChanged: showFingering = checked
+        contentItem: Text {
+          text: parent.text
+          color: "white"
+          leftPadding: 17 
+          verticalAlignment: Text.AlignVCenter
+          }
+        } 
       }
       // row 3 : layout selection +
       RowLayout {
