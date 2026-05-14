@@ -27,13 +27,13 @@ MuseScore {
   property int tooltipDelay: 777 
   // buttonboard
   property var trebleLayout: []  // to be populated with button objects
-  property int buttonSize: 22
+  property int buttonSize: 26
   property int buttonSpacing: 4
   property var activePitches: []  // dynamic by ms selection / playback
 
 
   readonly property var chordMap: {
-   // stradella only 
+   // stradella
     "0,4,7": "major",
     "0,3,7": "minor",
     "0,4,7,10": "7",
@@ -71,10 +71,6 @@ MuseScore {
     var names = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
     return names[pitch % 12]
   }
-  function getButtonX(col, row) {
-    var offset = (row % 2 === 0) ? 0 : buttonSize / 2;
-    return col * (buttonSize + buttonSpacing) + offset
-  }
   function initTreble() {
     var layout = []
     var rows = 5
@@ -94,7 +90,7 @@ MuseScore {
     trebleLayout = layout
   }
   function identifyChord(pitches) {
-    // var noteNames = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
+    // var names = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
     // remove duplicates & normalize to single octave
     var normalized = []
     for (var i = 0; i < pitches.length; i++) {
@@ -103,6 +99,7 @@ MuseScore {
     }
     normalized.sort(function(a, b) { return a - b })
     // test notes for potential root
+    var bassNote = (pitches[0] % 12 + 12) % 12
     for (var r = 0; r < normalized.length; r++) {
       var root = normalized[r]
       var currentIntervals = []
@@ -112,8 +109,12 @@ MuseScore {
       currentIntervals.sort(function(a, b) { return a - b; })
       var intStr = currentIntervals.join(",")
       if (chordMap[intStr]) {
-        // return noteNames[root] + " " + chordMap[intStr]
-        return getNoteName(root) + " " + chordMap[intStr]
+        // return names[root] + " " + chordMap[intStr]
+        var chordName = getNoteName(root) + " " + chordMap[intStr]
+        if (root !== bassNote) {
+          chordName += "/" + getNoteName(bassNote)
+        }
+        return chordName
       }
     }
     return qsTr("unknown chord")
@@ -206,21 +207,21 @@ MuseScore {
         verticalAlignment: Text.AlignVCenter
           }
         }
-        // show right treble : todo : let be replaced by revealer widget <->
-        CheckBox {
-        text: qsTr("treble")
-        ToolTip.text: qsTr("show right treble vs default left bass buttonboard") 
-        ToolTip.visible: hovered
-        ToolTip.delay: tooltipDelay 
-        checked: showTreble
-        onCheckedChanged: showTreble = checked
-        contentItem: Text {
-          text: parent.text
-          color: "white"
-          leftPadding: textLeftPadding 
-          verticalAlignment: Text.AlignVCenter
-          }
-        }
+        // show right treble : todo : let be replaced by revealer widget <-> done
+        // CheckBox {
+        // text: qsTr("treble")
+        // ToolTip.text: qsTr("show right treble vs default left bass buttonboard") 
+        // ToolTip.visible: hovered
+        // ToolTip.delay: tooltipDelay 
+        // checked: showTreble
+        // onCheckedChanged: showTreble = checked
+        // contentItem: Text {
+        //   text: parent.text
+        //   color: "white"
+        //   leftPadding: textLeftPadding 
+        //   verticalAlignment: Text.AlignVCenter
+        //   }
+        // }
         // show tone names on buttons
         CheckBox {
         text: qsTr("tones")
@@ -279,7 +280,7 @@ MuseScore {
         id: boardScroller
         Layout.fillWidth: true
         Layout.fillHeight: true
-        contentHeight: scrollContent.height
+        contentHeight: scrollContent.height 
         clip: true
         Column {
           id: scrollContent
@@ -290,21 +291,21 @@ MuseScore {
             id: trebleBoard
             width: parent.width
             height: 420 // fixed height for treble section
-            Column {
+            Row {
               anchors.horizontalCenter: parent.horizontalCenter
-              spacing: -5 // creates vertical overlap for honeycomb
+              spacing: buttonSpacing // 6 // creates vertical overlap for honeycomb
               Repeater {
-                model: 5
-                delegate: Row {
-                  property int rowIndex: index
-                  spacing: 2
-                  leftPadding: (rowIndex % 2 !== 0) ? 12 : 0 // half button offset
+                model: 5 // 5 rows of cba
+                delegate: Column {
+                  property int colIndex: index
+                  spacing: buttonSpacing // 8  // vertical spacing between buttons
+                  topPadding: (colIndex % 2 === 0) ? 15 : 0 // half button offset
                   Repeater {
-                    model: 17
+                    model: (colIndex % 2 === 0) ? 16 : 17 
                     delegate: Rectangle {
-                      width: 22
-                      height: 22
-                      radius: 11
+                      width:buttonSize 
+                      height: buttonSize
+                      radius: buttonSize / 2 
                       color: "#eeeeee"
                       border.color: "#666666"
                       border.width: 1
@@ -315,10 +316,10 @@ MuseScore {
             }
           }
           // bass board placeholder
-          Rectangle {
+          Item {
+            id: bassBoard
             width: parent.width
-            height: 300
-            color: "transparent"
+            height: 400
           }
         }
       }
