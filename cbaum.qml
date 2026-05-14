@@ -63,9 +63,17 @@ MuseScore {
     "0,4,7,11,14": "Maj9",
     "0,4,7,11,14,21": "Maj13"
   }
-  function calculatePitch(col, row) {
-    // c-griff placeholder
-    return 60 + (row * 3) + (col * 2)
+  function calculatePitch(row, col) {
+    // start 52
+    var g3 = 55
+    // semitone offset for 1st button of each column
+    var offset = [0, -1, 1, 0, 2]
+    // starting pitch of columns
+    return (g3 + offset[col]) + (row * 3)
+  }
+  function isBlackButton(pitch) {
+    var p = pitch % 12
+    return (p === 1 || p === 3 || p === 6 || p === 8 || p === 10)
   }
   function getNoteName(pitch) {
     var names = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
@@ -120,6 +128,7 @@ MuseScore {
     return qsTr("unknown chord")
   }
   function getSelectedPitch() {
+    // selected note in ms score opened : runs on get chord button click
     if (!curScore) {
       console.log(qsTr("no score opened"))
       return
@@ -306,9 +315,20 @@ MuseScore {
                       width:buttonSize 
                       height: buttonSize
                       radius: buttonSize / 2 
-                      color: "#eeeeee"
+                      // calculate pitch
+                      property int pitch: calculatePitch(index, colIndex)
+                      // determine button color
+                      property bool black: isBlackButton(pitch)
+                      color: black ? "#333333" : "#eeeeee"
                       border.color: "#666666"
                       border.width: 1
+                      Text {
+                        anchors.centerIn: parent
+                        text: !isBlackButton(pitch) ? getNoteName(pitch) : ""
+                        visible: !isBlackButton // only show naturals
+                        font.pixelSize: 8
+                        color: "black"
+                      }
                     }
                   }
                 }
