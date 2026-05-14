@@ -37,7 +37,7 @@ MuseScore {
     { name: "B-griff Bayan", start: 55, offset: [3, 1, 2, 0, 1] }, 
     { name: "B-griff Finland", start: 55, offset: [1, 0, 2, 1, 3] },
     { name: "D-griff 1", start: 53, offset: [1, 0, 2, 1, 3] },
-    { name: "D-griff 2", start: 55, offset: [2, 0, 1, -1, 0] } // todo
+    { name: "D-griff 2", start: 55, offset: [2, 0, 1, -1, 0] }
   ]
   property var selectedLayout: layouts[0]
   readonly property var chordMap: {
@@ -154,6 +154,23 @@ MuseScore {
   }
   function addChordText() {
     console.log(qsTr("adding chord text to selected notes"))
+    var chord = foundChordTextField.text
+    if (chord === "none" || 
+      chord === "unknown chord" || 
+      chord.indexOf("select") !== -1) return
+
+    curScore.startCmd()
+    var cursor = curScore.newCursor()
+    cursor.rewind(1)  // to start of selection
+    var text = newElement(Element.STAFF_TEXT)
+    text.text = chord
+
+    // ensure cursor pointing to valid track
+    if (curScore.selection.elements.length > 0) {
+      cursor.track = curScore.selection.elements[0].track
+    }
+    cursor.add(text)
+    curScore.endCmd()
   }
   Rectangle {
     id: mainContainer
@@ -169,7 +186,7 @@ MuseScore {
         Layout.fillWidth: true
         Layout.leftMargin: rowLeftMargin 
         Layout.rightMargin: rowLeftMargin 
-        spacing: 12
+        spacing: 4
         // identify chord from selected notes
         Button {
           text: qsTr("get chord")
@@ -182,6 +199,7 @@ MuseScore {
         TextField {
           id: foundChordTextField
           text: qsTr("none")
+          font.pixelSize: 14
           ToolTip.text: qsTr("chord identified from selected notes\ncan be added to notes as text")
           ToolTip.visible: hovered
           ToolTip.delay: tooltipDelay 
@@ -211,8 +229,8 @@ MuseScore {
         id: meloBassCbx
         checked: meloBassMode 
         onCheckedChanged: meloBassMode = checked
-        text: qsTr("MB")
-        ToolTip.text: qsTr("present as melodic / free bass chord")
+        text: qsTr("MB") // for majority langs this can stay MB ???
+        ToolTip.text: qsTr("present as melodic / free bass chord vs default stradella bass")
         ToolTip.visible: hovered
         ToolTip.delay: tooltipDelay 
         contentItem: Text {
@@ -222,21 +240,6 @@ MuseScore {
         verticalAlignment: Text.AlignVCenter
           }
         }
-        // show right treble : todo : let be replaced by revealer widget <-> done
-        // CheckBox {
-        // text: qsTr("treble")
-        // ToolTip.text: qsTr("show right treble vs default left bass buttonboard") 
-        // ToolTip.visible: hovered
-        // ToolTip.delay: tooltipDelay 
-        // checked: showTreble
-        // onCheckedChanged: showTreble = checked
-        // contentItem: Text {
-        //   text: parent.text
-        //   color: "white"
-        //   leftPadding: textLeftPadding 
-        //   verticalAlignment: Text.AlignVCenter
-        //   }
-        // }
         // show tone names on buttons
         CheckBox {
         text: qsTr("tones")
