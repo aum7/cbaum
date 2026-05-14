@@ -29,9 +29,8 @@ MuseScore {
   property var trebleLayout: []  // to be populated with button objects
   property int buttonSize: 26
   property int buttonSpacing: 4
-  property var activePitches: []  // dynamic by ms selection / playback
-
-
+  property int buttonFontSize: 22 
+  // property var activePitches: []  // dynamic by ms selection / playback
   readonly property var chordMap: {
    // stradella
     "0,4,7": "major",
@@ -325,8 +324,8 @@ MuseScore {
                       Text {
                         anchors.centerIn: parent
                         text: !isBlackButton(pitch) ? getNoteName(pitch) : ""
-                        visible: !isBlackButton // only show naturals
-                        font.pixelSize: 8
+                        visible: !isBlackButton(pitch) // only show naturals
+                        font.pixelSize: buttonFontSize
                         color: "black"
                       }
                     }
