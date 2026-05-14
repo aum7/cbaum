@@ -23,8 +23,14 @@ MuseScore {
   property bool showFingering: false
   property string currentLayout: "C-griff Eu"
   property int rowLeftMargin: 7
-  property int rowLeftPadding: 22
+  property int textLeftPadding: 19 
   property int tooltipDelay: 777 
+  // buttonboard
+  property var trebleLayout: []  // to be populated with button objects
+  property int buttonSize: 22
+  property int buttonSpacing: 4
+  property var activePitches: []  // dynamic by ms selection / playback
+
 
   readonly property var chordMap: {
    // stradella only 
@@ -57,8 +63,38 @@ MuseScore {
     "0,4,7,11,14": "Maj9",
     "0,4,7,11,14,21": "Maj13"
   }
+  function calculatePitch(col, row) {
+    // c-griff placeholder
+    return 60 + (row * 3) + (col * 2)
+  }
+  function getNoteName(pitch) {
+    var names = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
+    return names[pitch % 12]
+  }
+  function getButtonX(col, row) {
+    var offset = (row % 2 === 0) ? 0 : buttonSize / 2;
+    return col * (buttonSize + buttonSpacing) + offset
+  }
+  function initTreble() {
+    var layout = []
+    var rows = 5
+    var cols = 17
+    for (var r = 0; r < rows; r++) {
+      for (var c = 0; c < cols; c++) {
+        layout.push({
+          "row": r,
+          "col": c,
+          "x": c * (buttonSize + buttonSpacing) + (r % 2 * (buttonSize / 2)),
+          "y": r * (buttonSize + buttonSpacing),
+          "pitch": 0, // calculate from buttonboard layout
+          "isWhite": true // naturals
+        })
+      }
+    }
+    trebleLayout = layout
+  }
   function identifyChord(pitches) {
-    var noteNames = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
+    // var noteNames = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
     // remove duplicates & normalize to single octave
     var normalized = []
     for (var i = 0; i < pitches.length; i++) {
@@ -76,7 +112,8 @@ MuseScore {
       currentIntervals.sort(function(a, b) { return a - b; })
       var intStr = currentIntervals.join(",")
       if (chordMap[intStr]) {
-        return noteNames[root] + " " + chordMap[intStr]
+        // return noteNames[root] + " " + chordMap[intStr]
+        return getNoteName(root) + " " + chordMap[intStr]
       }
     }
     return qsTr("unknown chord")
@@ -115,7 +152,7 @@ MuseScore {
       RowLayout {
         Layout.fillWidth: true
         Layout.leftMargin: rowLeftMargin 
-        // Layout.rightMargin: rowLeftMargin 
+        Layout.rightMargin: rowLeftMargin 
         spacing: 12
         // identify chord from selected notes
         Button {
@@ -136,9 +173,10 @@ MuseScore {
           color: "dodgerblue"
           readOnly: true
           selectByMouse: true
+          focus: true
           background: Rectangle { color: "transparent" }
         }
-        // add identified chord as staff text above selected notes
+        // add identified chord as staff text above selected notes todo
         Button {
           text: qsTr("add as text")
           ToolTip.text: qsTr("add identified chord to selected notes")
@@ -151,7 +189,6 @@ MuseScore {
       RowLayout {
         Layout.fillWidth: true
         Layout.leftMargin: rowLeftMargin 
-        // Layout.rightMargin: rowLeftMargin 
         spacing: 10
         // use free bass for chord presentation
         CheckBox {
@@ -165,7 +202,7 @@ MuseScore {
         contentItem: Text {
         text: parent.text
         color: "white"
-        leftPadding: rowLeftPadding 
+        leftPadding: textLeftPadding 
         verticalAlignment: Text.AlignVCenter
           }
         }
@@ -180,7 +217,7 @@ MuseScore {
         contentItem: Text {
           text: parent.text
           color: "white"
-          leftPadding: rowLeftPadding 
+          leftPadding: textLeftPadding 
           verticalAlignment: Text.AlignVCenter
           }
         }
@@ -195,22 +232,7 @@ MuseScore {
         contentItem: Text {
           text: parent.text
           color: "white"
-          leftPadding: rowLeftPadding
-          verticalAlignment: Text.AlignVCenter
-          }
-        } 
-        // show fingering todo : should be button ???
-        CheckBox {
-        text: qsTr("fingering")
-        ToolTip.text: qsTr("check or add fingering to treble part")
-        ToolTip.visible: hovered
-        ToolTip.delay: tooltipDelay 
-        checked: showFingering
-        onCheckedChanged: showFingering = checked
-        contentItem: Text {
-          text: parent.text
-          color: "white"
-          leftPadding: rowLeftPadding
+          leftPadding: textLeftPadding
           verticalAlignment: Text.AlignVCenter
           }
         } 
@@ -219,7 +241,7 @@ MuseScore {
       RowLayout {
         Layout.fillWidth: true
         Layout.leftMargin: rowLeftMargin 
-        spacing: 5
+        spacing: 18
         ComboBox {
           id: layoutSelector
           ToolTip.text: qsTr("select treble layout")
@@ -236,21 +258,70 @@ MuseScore {
             "D-griff 2"]
           onActivated: currentLayout = currentText
         }
+        // show fingering todo : should be button ???
+        CheckBox {
+        text: qsTr("fingering")
+        ToolTip.text: qsTr("check or add fingering to treble part")
+        ToolTip.visible: hovered
+        ToolTip.delay: tooltipDelay 
+        checked: showFingering
+        onCheckedChanged: showFingering = checked
+        contentItem: Text {
+          text: parent.text
+          color: "white"
+          leftPadding: textLeftPadding
+          verticalAlignment: Text.AlignVCenter
+          }
+        } 
       }
-      // row 4 : buttonboard scheme
-      Rectangle {
-        id: boardContainer
+      // row 4
+      Flickable {
+        id: boardScroller
         Layout.fillWidth: true
         Layout.fillHeight: true
-        color: "#1a1a1a"
-        border.color: "#333"
-        Label {
-          anchors.centerIn: parent
-          text: "board placeholder"
-          color: "#444"
+        contentHeight: scrollContent.height
+        clip: true
+        Column {
+          id: scrollContent
+          width: boardScroller.width
+          spacing: 40
+          // treble board
+          Item {
+            id: trebleBoard
+            width: parent.width
+            height: 420 // fixed height for treble section
+            Column {
+              anchors.horizontalCenter: parent.horizontalCenter
+              spacing: -5 // creates vertical overlap for honeycomb
+              Repeater {
+                model: 5
+                delegate: Row {
+                  property int rowIndex: index
+                  spacing: 2
+                  leftPadding: (rowIndex % 2 !== 0) ? 12 : 0 // half button offset
+                  Repeater {
+                    model: 17
+                    delegate: Rectangle {
+                      width: 22
+                      height: 22
+                      radius: 11
+                      color: "#eeeeee"
+                      border.color: "#666666"
+                      border.width: 1
+                    }
+                  }
+                }
+              }
+            }
+          }
+          // bass board placeholder
+          Rectangle {
+            width: parent.width
+            height: 300
+            color: "transparent"
+          }
         }
       }
-    } 
+    }
   }
 }
-
