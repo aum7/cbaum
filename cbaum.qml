@@ -10,10 +10,14 @@ MuseScore {
   pluginType: "dialog"
   title: qsTr("chromatic button accordion plugin")
   width: 300
-  height: panelExpanded ? 650 : 54
+  // height: 54
+  Layout.fillHeight: true
+    // 400 : 0)
+  // maximumHeight: 54
+  // height: panelExpanded ? 650 : 54
   onPanelExpandedChanged: {
-    console.log("[cbaplugin] panelExpanded changed to : " + panelExpanded)
-    console.log("[cbaplugin] window height is now : " + height)
+    console.log("[cbaplugin] panelExpanded : " + panelExpanded)
+    console.log("[cbaplugin] window height : " + height)
   }
   onRun: {
     console.log("running cba ...")
@@ -190,25 +194,34 @@ MuseScore {
     }
     curScore.endCmd()
   }
-  Rectangle {
+  ColumnLayout {
     id: mainContainer
-    width: parent.width
+    anchors.fill: parent
+    spacing: 0
+    // Layout.preferredHeight: panelExpanded ? 500 : 54
+    // console.log("[mainContainer] preferredHeight : ", Layout.preferredHeight)
+    // width: parent.width
     // implicitHeight: fixedComp.implicitHeight
-    color: "transparent"
+    // color: "transparent"
     // todo below line kills expanderBar
-    Column {
-      id: fixedComp
-      width: parent.width
-      spacing: 0 // 10
-      // implicitHeight: row1.height +
-        // expanderBar.height + 
-        // (panelExpanded ? layoutViewerComp.implicitHeight : 0)
-      // row 1 : chord identifier : always visible 6 fixed height
-      Row {
+    // ColumnLayout {
+    //   id: fixedComp
+    //   Layout.fillWidth: true
+    //   Layout.fillHeight: false 
+    //   // height: panelExpanded ? 300 : 54 // wont cancel moving fixedComp
+    //   Layout.preferredHeight: 54
+    //   spacing: 0 // 10
+      // width: parent.width
+      // row 1 : chord identifier : always visible & fixed height
+      RowLayout {
         id: row1
-        width: parent.width - (rowLeftMargin * 2)
-        x: rowLeftMargin
-        height: 40 // fixed height
+        Layout.fillWidth: true
+        Layout.preferredHeight: 40
+        Layout.leftMargin: rowLeftMargin
+        Layout.rightMargin: rowLeftMargin
+        // width: parent.width - (rowLeftMargin * 2)
+        // x: rowLeftMargin
+        // height: 40 // fixed height
         // identify chord from selected notes
         Button {
           text: qsTr("get chord")
@@ -228,8 +241,8 @@ MuseScore {
           Layout.fillWidth: true
           color: "dodgerblue"
           readOnly: true
-          selectByMouse: true
-          focus: true
+          selectByMouse: false
+          focus: false
           background: Rectangle { color: "transparent" }
         }
         // add identified chord as staff text above selected notes todo
@@ -244,8 +257,10 @@ MuseScore {
       // separator as expander toggler
       Rectangle {
         id: expanderBar
-        width: parent.width
-        height: 14
+        Layout.fillWidth: true
+        Layout.preferredHeight: 14
+        // width: parent.width
+        // height: 14
         color: "#222222"
         // clickable handle
         Rectangle {
@@ -263,26 +278,61 @@ MuseScore {
           cursorShape: Qt.PointingHandCursor
           onClicked: {
             panelExpanded = !panelExpanded
-            cbaplugin.height = panelExpanded ? 650 : 54
-            console.log("[MouseArea] clicked : new state " + panelExpanded)
-            console.log("[MouseArea] clicked : new height " + cbaplugin.height)
+            // cbaplugin.height = fixedComp.height +
+            //   (panelExpanded ? layoutViewerPane.height : 0)
+            // cbaplugin.height = panelExpanded ? 650 : 54
+            console.log("[MouseArea] panelExpanded : " + panelExpanded)
+            // console.log("[MouseArea] layoutViewerPane Layout.preferredHeight : " +
+            //   layoutViewerPane.Layout.preferredHeight)
+            // console.log("[MouseArea] layoutViewerPane visible : ",
+            //   layoutViewerPane.visible)
           }
         }
       }
-      // expandable aka revealed content
-      Column {
-        id: layoutViewerComp
-        width: parent.width
-        visible: panelExpanded
-        // implicitHeight: childrenRect.height
-        spacing: 10
-        topPadding: 10
+    // }
+    // expandable aka revealed content
+    // Pane {
+    //   id: layoutViewerPane
+    //   // width: parent.width
+    //   Layout.fillWidth: true
+    //   Layout.preferredHeight: panelExpanded ? implicitHeight : 0
+    //   visible: Layout.preferredHeight > 0
+    //   clip: true
+    //   // Behavior on Layout.preferredHeight {
+    //   //   NumberAnimation {
+    //   //     easing.type: Easing.InOutQuad
+    //   //     duration: 200
+    //   //   }
+    //   // }
+    //   // degug
+    //   Component.onCompleted: {
+    //     console.log("[layoutViewerPane] implicitHeight : ", implicitHeight)
+    //   }
+      // implicitHeight: childrenRect.height
+      // spacing: 10
+      // topPadding: 10
+      // ColumnLayout {
+      //   id: paneColumn
+      //   anchors.fill: parent
+      //   spacing: 10
+      //   Component.onCompleted: {
+      //     console.log("[ColumnLayout] initial height : ", height)
+      //   }
+      //   onHeightChanged: {
+      //     console.log("[ColumnLayout] height changed to : ", height)
+      //   }
+        // topPadding: 10
+        // row2
         RowLayout {
           id: row2
-          width: parent.width
-          height: 40
+          Layout.fillWidth: true
+          Layout.preferredHeight: 40
           spacing: 10
-          // use free bass for chord presentation
+        // }
+        // width: parent.width
+        // height: 40
+        // spacing: 10
+        // use free bass for chord presentation
           CheckBox {
             id: meloBassCbx
             text: qsTr("MB") // for majority langs this can stay MB ???
@@ -342,16 +392,16 @@ MuseScore {
             Layout.preferredWidth: 120
             model: layouts
             textRole: "name"
-            onActivated: selectedLayout = layouts[index]
+            onActivated: function(index) { selectedLayout = layouts[index] }
           }
         }
         // row 4
-        Flickable {
-          id: boardScroller
-          Layout.fillWidth: true
-          Layout.fillHeight: true
-          contentHeight: scrollContent.height 
-          clip: true
+        // Flickable {
+        //   id: boardScroller
+        //   Layout.fillWidth: true
+        //   Layout.fillHeight: true
+        //   contentHeight: scrollContent.height 
+          // clip: true
           Column {
             id: scrollContent
             width: boardScroller.width
@@ -360,7 +410,8 @@ MuseScore {
             Item {
               id: trebleBoard
               width: parent.width
-              height: 420 // fixed height for treble section
+              Layout.preferredHeight: 420
+              // height: 420 // fixed height for treble section
               Row {
                 id: trebleRow
                 anchors.horizontalCenter: parent.horizontalCenter
@@ -397,15 +448,16 @@ MuseScore {
                 }
               }
             }
+            // }
             // bass board placeholder
-            Item {
-              id: bassBoard
-              width: parent.width
-              height: 400
-            }
-          }
-        }
-      }
+            // Item {
+            //   id: bassBoard
+            //   width: parent.width
+            //   height: 400
+            // }
+          // }
+        // }
+      // }
     }
   }
 }
