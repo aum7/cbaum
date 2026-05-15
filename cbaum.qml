@@ -8,15 +8,11 @@ MuseScore {
   description: qsTr("chromatic button accordion")
   pluginType: "dock"
   title: qsTr("chromatic button accordion plugin")
-
   width: 300
   height: 900
-
   onRun: {
     console.log("running cba ...")
   }
-
-  // property bool allChordsMode: false
   property bool meloBassMode: false
   property bool showTreble: false
   property bool showButtonTones: false
@@ -40,36 +36,28 @@ MuseScore {
     { name: "D-griff 2", start: 55, offset: [2, 0, 1, -1, 0] }
   ]
   property var selectedLayout: layouts[0]
-  readonly property var chordMap: {
-   // stradella
-    "0,4,7": "major",
-    "0,3,7": "minor",
-    "0,4,7,10": "7",
-    "0,3,6": "dim",
-    "0,3,6,9": "dim7",
-    // expanded (all chords mode)
-    "0,4,7,11": "Maj7",
-    "0,3,7,10": "m7",
-    "0,3,6,10": "m7b5",
-    "0,3,7,11": "mMaj7",
-    "0,4,8": "aug",
-    "0,4,8,10": "7#5",
-    "0,4,7,9": "6",
-    "0,3,7,9": "m6",
-    "0,2,7": "sus2",
-    "0,5,7": "sus4",
-    "0,5,7,10": "7sus4",
-    // extensions (identified via pitch class sets)
-    "0,2,4,7": "add9",
-    "0,4,7,10,14": "9",
-    "0,2,3,7": "m(add9)",
-    "0,4,7,10,13": "7b9",
-    "0,4,7,10,15": "7#9",
-    "0,4,6,10": "7b5",
-    "0,4,7,10,14,17": "11",
-    "0,4,7,10,14,21": "13",
-    "0,4,7,11,14": "Maj9",
-    "0,4,7,11,14,21": "Maj13"
+  readonly property var chordMap: { // bitmask matrix
+    // basic
+    "145":  "",       // major
+    "137":  "m",      // minor
+    "273":  "aug",    // aug
+    "73":   "dim",    // dim
+    "585":  "dim7",   // dim7
+    // 7s & 6s
+    "1169": "7",      // 7
+    "1041": "7",      // 7 with dropped 5th
+    "2193": "Maj7",   // Maj7
+    "2065": "Maj7",   // Maj7 with dropped 5th
+    "1161": "m7",     // m7
+    "1033": "m7",     // m7 with drepped 5th
+    "1097": "m7b5",   // m7b5
+    "657":  "6",      // 6
+    "649":  "m6",     // m6
+    "1173": "9",      // 9
+    // suspended
+    "161":  "sus4",   // sus4
+    "141":  "sus2",   // sus2
+    "1185": "7sus4"   // 7sus4
   }
   function mapButtonToMidi(row, col) {
     var base = selectedLayout.start
@@ -104,34 +92,33 @@ MuseScore {
     trebleLayout = layout
   }
   function identifyChord(pitches) {
-    // var names = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
-    // remove duplicates & normalize to single octave
     var normalized = []
     for (var i = 0; i < pitches.length; i++) {
       var p = pitches[i] % 12
       if (normalized.indexOf(p) === -1) normalized.push(p)
     }
-    normalized.sort(function(a, b) { return a - b })
-    // test notes for potential root
+    // lowest selected note
     var bassNote = (pitches[0] % 12 + 12) % 12
     for (var r = 0; r < normalized.length; r++) {
       var root = normalized[r]
-      var currentIntervals = []
+      var mask = 0
+      // calculate 12-bit fingerprint relative to root
       for (var j = 0; j < normalized.length; j++) {
-        currentIntervals.push((normalized[j] - root + 12) % 12);
+        var interval = (normalized[j] - root + 12) % 12
+        mask |= (1 << interval)
       }
-      currentIntervals.sort(function(a, b) { return a - b; })
-      var intStr = currentIntervals.join(",")
-      if (chordMap[intStr]) {
-        // return names[root] + " " + chordMap[intStr]
-        var chordName = getNoteName(root) + " " + chordMap[intStr]
+      // check against our bitmask map
+      if (chordMap[mask] !== undefined) {
+        var suffix = chordMap[mask]
+        var chordName = getNoteName(root) + suffix
+        // add slash bass notation if root isnt bottom mote
         if (root !== bassNote) {
           chordName += "/" + getNoteName(bassNote)
         }
         return chordName
       }
     }
-    return qsTr("unknown chord")
+    return qsTr("unknown")
   }
   function getSelectedPitch() {
     // selected note in ms score opened : runs on get chord button click
@@ -155,22 +142,54 @@ MuseScore {
   function addChordText() {
     console.log(qsTr("adding chord text to selected notes"))
     var chord = foundChordTextField.text
-    if (chord === "none" || 
-      chord === "unknown chord" || 
+    if (!chord || 
+      chord === "none" || 
+      chord === "unknown" || 
       chord.indexOf("select") !== -1) return
+    var selection = curScore.selection.elements
+    if (selection.length === 0) {
+      console.log("[addChordText] nothing selected : exiting ...")
+      return
+    }
+    // find 1st ote or chord to get valid segment
+    var firstNote = null
+    for (var i = 0; i < selection.length; i++) {
+      if (selection[i].type === Element.NOTE) {  //|| 
+        // selection[i].type === Element.CHORD)
+        firstNote = selection[i]
+        break
+      }
+    }
+    if (!firstNote) {
+      console.log("[addChordText] no firstNorte : exiting ...")
+      return
+    }
 
     curScore.startCmd()
     var cursor = curScore.newCursor()
-    cursor.rewind(1)  // to start of selection
+    cursor.track = firstNote.track // point specific staff & voice
+    cursor.inputStateMode = Cursor.INPUT_STATE_SYNC_WITH_SCORE // get segment
+    var targetTick = firstNote.parent.parent.tick // segment
+
+    cursor.rewind(0)  // start of score
+    while (cursor.segment && cursor.tick < targetTick) {
+      cursor.next()
+    }
+    // inject
     var text = newElement(Element.STAFF_TEXT)
     text.text = chord
-
-    // ensure cursor pointing to valid track
-    if (curScore.selection.elements.length > 0) {
-      cursor.track = curScore.selection.elements[0].track
+    // add text directly to segment on specific track
+    if (cursor.segment) {
+      cursor.add(text)
     }
-    cursor.add(text)
     curScore.endCmd()
+    // explicitly set track so it doesnt default to track 0
+    // text.track = firstElement.track
+    // if (cursor.segment) {
+    //   cursor.add(text)
+    // } else {
+    //   console.log("cursor failed to find a valid segment at selection start")
+    // }
   }
   Rectangle {
     id: mainContainer
@@ -255,6 +274,21 @@ MuseScore {
           verticalAlignment: Text.AlignVCenter
           }
         } 
+        // show fingering todo : should be button ???
+        CheckBox {
+        text: qsTr("fingering")
+        ToolTip.text: qsTr("check or add fingering to treble part")
+        ToolTip.visible: hovered
+        ToolTip.delay: tooltipDelay 
+        checked: showFingering
+        onCheckedChanged: showFingering = checked
+        contentItem: Text {
+          text: parent.text
+          color: "white"
+          leftPadding: textLeftPadding
+          verticalAlignment: Text.AlignVCenter
+          }
+        } 
       }
       // row 3 : layout selection +
       RowLayout {
@@ -271,21 +305,6 @@ MuseScore {
           textRole: "name"
           onActivated: selectedLayout = layouts[index]
         }
-        // show fingering todo : should be button ???
-        CheckBox {
-        text: qsTr("fingering")
-        ToolTip.text: qsTr("check or add fingering to treble part")
-        ToolTip.visible: hovered
-        ToolTip.delay: tooltipDelay 
-        checked: showFingering
-        onCheckedChanged: showFingering = checked
-        contentItem: Text {
-          text: parent.text
-          color: "white"
-          leftPadding: textLeftPadding
-          verticalAlignment: Text.AlignVCenter
-          }
-        } 
       }
       // row 4
       Flickable {
