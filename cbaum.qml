@@ -48,11 +48,11 @@ MuseScore {
   property var selectedLayout: layouts[0]
   // buttonboard bass layouts
   property var bassLayouts: [ // name, lowest note, offset from lowest = start MIDI
-    { name: "minor 3rds",start: 54, offset: [0, 1, 2, 3, 4] }, // C-griff Europe mirror
-    { name: "Bayan", start: 55, offset: [3, 1, 2, 0, 1] }, // todo C-griff 2
-    { name: "5ths", start: 55, offset: [3, 1, 2, 0, 1] }, // todo B-griff Bayan
-    { name: "N. Europe", start: 55, offset: [1, 0, 2, 1, 3] }, // todo B-griff Finland ; b-griff baan mirror
-    { name: "Finnish", start: 53, offset: [1, 0, 2, 1, 3] }, // todo D-griff 1
+    { name: "minor 3rds",start: 54, offset: [0, 1, 2, 3, 4], vStep: 3 }, // C-griff Europe mirror
+    { name: "Bayan", start: 54, offset: [29, 28, 27, 26, 4], vStep: -3 }, // todo C-griff 2
+    { name: "5ths", start: 54, offset: [24, 28, 12, 16, 4], vStep: 5 }, // todo B-griff Bayan
+    { name: "N. Europe", start: 54, offset: [-1, 1, 3, 5, 4], vStep: 3 }, // todo B-griff Finland ; b-griff baan mirror
+    { name: "Finnish", start: 54, offset: [-1, 0, 1, 2, 4], vStep: 3 }, // todo D-griff 1
   ]
   property var selectedBassLayout: bassLayouts[0]
   readonly property var chordMap: { // bitmask matrix
@@ -85,8 +85,8 @@ MuseScore {
     return (base + off) + (row * 3)
   }
   function mapMelodicBass(row, col) {
+    var stradellaFB = 42 + (row * 5) // 5ths
     if (!meloBassMode) { // stradella standard
-      var stradellaFB = 42 - (row * 5) // 5ths
       switch (col) {
         case 0: return stradellaFB + 4 // cb
         case 1: return stradellaFB  // fb
@@ -102,7 +102,15 @@ MuseScore {
       var base = selectedBassLayout.start
       var offsetIdx = 5 - col
       var off = selectedBassLayout.offset[offsetIdx]
-      return (base + off) + (row * 3)
+      var step = selectedBassLayout.vStep
+      // bass 3 5ths needs extra lowe
+      if (selectedBassLayout.name === "5ths") {
+        var targetPitch = (base + off) + (row * step)
+        while (targetPitch > 83) targetPitch -= 12
+        while (targetPitch < 60) targetPitch += 12
+        return targetPitch
+      }
+      return (base + off) + (row * step)
     }
   }
   function isBlackButton(pitch) {
@@ -400,7 +408,7 @@ MuseScore {
         }
       }
       // bass board
-      Item {
+      Item { // accidentals included
         id: bassBoard
         width: parent.width
         // height: (12 * (bassBtnSize + bassBtnSpacing)) + (5 * (bassBtnSize / 2))
@@ -415,26 +423,46 @@ MuseScore {
           Repeater {
             model: ["o", "7", "m", "M", "fb", "cb"]
             delegate: Column {
+              id: columnDelegate
               property int col: index
               spacing: bassBtnSpacing
               topPadding: col * (bassBtnSize / 2)
               Repeater {
                 model: 12 // tones in 72 bass-button case
                 delegate: Rectangle {
+                  id: rowDelegate
+                  property int row: index
                   width: bassBtnSize
                   height: bassBtnSize
                   radius: bassBtnSize / 2
                   // converter logic
-                  property int pitch: mapMelodicBass(index, 5 - col)
+                  property int pitch: mapMelodicBass(row, 5 - columnDelegate.col)
                   property bool black: isBlackButton(pitch)
                   color: black ? "#333333" : "#eeeeee"
                   border.color: "#666666"
                   Text {
+                    text: {
+                      if (columnDelegate.col === 4 || columnDelegate.col === 5) {
+                        return getNoteName(pitch)
+                      }
+                      if (!meloBassMode) {
+                        if (rowDelegate.row === 0 || 
+                          rowDelegate.row === 5 || 
+                          rowDelegate.row === 11) {
+                          var chordLabels = ["o", "7", "m", "M"]
+                          return chordLabels[columnDelegate.col]
+                        }
+                        return ""
+                      }
+                      // fallback for melodic bass mode
+                      return getNoteName(pitch)
+                    }
+                    font.pixelSize: text.length > 1 ? 
+                      bassBtnFontSize * 0.68 : 
+                      bassBtnFontSize
+                    color: black ? "white" : "black"
+                    visible: showButtonTones
                     anchors.centerIn: parent
-                    text: getNoteName(pitch)
-                    visible: !black && showButtonTones
-                    font.pixelSize: bassBtnFontSize
-                    color: "black"
                   }
                 }
               }
