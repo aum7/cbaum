@@ -447,7 +447,7 @@ MuseScore {
                       }
                       if (!meloBassMode) {
                         if (rowDelegate.row === 0 || 
-                          rowDelegate.row === 5 || 
+                          rowDelegate.row === 6 || 
                           rowDelegate.row === 11) {
                           var chordLabels = ["o", "7", "m", "M"]
                           return chordLabels[columnDelegate.col]
