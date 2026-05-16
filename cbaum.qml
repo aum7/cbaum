@@ -180,15 +180,15 @@ MuseScore {
       if (elements[i].type === Element.NOTE) pitches.push(elements[i].pitch)
     }
     if (pitches.length < 3) {
-      foundChordTextField.text = qsTr("select 3+ notes")
+      foundChordLabel.text = qsTr("select 3+ notes")
       return
     }
     pitches.sort(function(a, b) { return a - b })
-    foundChordTextField.text = identifyChord(pitches) 
+    foundChordLabel.text = identifyChord(pitches) 
   }
   function addChordText() {
     // console.log(qsTr("adding chord text to selected notes"))
-    var chord = foundChordTextField.text
+    var chord = foundChordLabel.text
     if (!chord || 
       chord === "none" || 
       chord === "unknown" || 
@@ -249,12 +249,17 @@ MuseScore {
         ToolTip.delay: tooltipDelay 
         onClicked: getSelectedPitch()
       }
-      TextField {
-        id: foundChordTextField
+      Label {
+        id: foundChordLabel
         text: qsTr("none")
-        Layout.fillWidth: true
+        width: 114
+        horizontalAlignment: Text.AlignHCenter
+        verticalAlignment: Text.AlignVCenter
+        font.pixelSize: 18
+        minimumPixelSize: 10
         color: "dodgerblue"
-        readOnly: true
+        padding: 0
+        fontSizeMode: Text.Fit
       }
       Button {
         text: qsTr("add as text")
