@@ -24,9 +24,9 @@ MuseScore {
   function isTreblePitchActive(pitch) {
     return trebleActivePitches.indexOf(pitch) !== -1
   }
-  function isBassPitchActive(pitch) {
-    return bassActivePitches.indexOf(pitch) !== -1
-  }
+  // function isBassPitchActive(pitch) {
+  //   return bassActivePitches.indexOf(pitch) !== -1
+  // }
   // monitor score selection
   Timer {
     interval: 200
@@ -54,10 +54,10 @@ MuseScore {
       }
       var tempBass = [] // split into stradella & melodic bass
       if (meloBassMode) { // match exact pitches across all board buttons
-        if (bassPitches.length === 1) {
-          var targetPitch = bassPitches[0]
+        for (var i = 0; i < bassPitches.length; i++) {
+          var targetPitch = bassPitches[i]
           for (var r = 0; r < 12; r++) {
-            for (var c = 0; c < 6; c++) {
+            for (var c = 0; c < 4; c++) {
               if (mapMelodicBass(r, c) === targetPitch) {
                 tempBass.push(r + "," + c)
               }
@@ -65,25 +65,78 @@ MuseScore {
           }
         }
       } else { // stradella
-        if (bassPitches.length === 1) { // single notes @ fb & cb
-          var targetPitchClass = bassPitches[0] % 12
-          for (var r = 0; r < 12; r++) {
-            if ((mapMelodicBass(r, 4) % 12) === targetPitchClass) {
-              tempBass.push(r + ",4")
-            }
-            if ((mapMelodicBass(r, 5) % 12) === targetPitchClass) {
-              tempBass.push(r + ",5")
+        var bassSolo = false
+        for (var i = 0; i < elements.length; i++) {
+          if (elements[i].type === Element.STAFF_TEXT) {
+            var txt = elements[i].text.toLowerCase().replace(/\./g, "")
+            if (txt === "sb" || txt === "bs") {
+              bassSolo = true
             }
           }
-        } else if (bassPitches.length >= 3) {
-          bassPitches.sort(function(a, b) { return a - b })
+        }
+        if (bassSolo) {
+        for (var i = 0; i < bassPitches.length; i++) {
+          // }
+          var targetPitchClass = bassPitches[i] % 12
+          for (var r = 0; r < 12; r++) {
+            if (((42 + r * 5) % 12) === targetPitchClass) tempBass.push(r + ",4")
+            if (((42 + r * 5 + 4) % 12) === targetPitchClass) tempBass.push(r + ",5")
+          }
+        }
+      } else {
+        var singleNotes = []
+        var chordNotes = []
+        for (var i = 0; i < bassPitches.length; i++) {
+          if (bassPitches[i] <= 50) {
+            singleNotes.push(bassPitches[i])
+          } else {
+            chordNotes.push(bassPitches[i])
+          }
+        }
+        for (var i = 0; i < singleNotes.length; i++) {
+          var targetPitchClass = singleNotes[i] % 12
+          for (var r = 0; r < 12; r++) {
+            if (((42 + r * 5) %12) === targetPitchClass) tempBass.push(r + ",4")
+            if (((42 + r * 5 + 4) % 12) === targetPitchClass) tempBass.push(r + ",5")
+          }
+        }
+        if (chordNotes.length >= 3 || 
+          (chordNotes.length > 0 && bassPitches.length >= 3)) {
+          var notesToDetect = chordNotes.length >= 3 ? chordNotes : bassPitches
+          notesToDetect.sort(function(a, b) { return a - b })
           var normalized = []
-          for (var k = 0; k < bassPitches.length; k++) {
-            var p = bassPitches[k] % 12
+          for (var k = 0; k < notesToDetect.length; k++) {
+            var p = notesToDetect[k] % 12
             if (normalized.indexOf(p) === -1) normalized.push(p)
           }
           var foundChordCol = -1
           var rootNoteClass = -1
+      //     for (var n = 0; n < normalized.length; n++) {
+      //       var root = normalized[n]
+      //       var mask = 0
+      //       for (var j = )
+      //     }
+      //   }
+      // }
+        // if (bassPitches.length === 1) { // single notes @ fb & cb
+          // var targetPitchClass = bassPitches[0] % 12
+          // for (var r = 0; r < 12; r++) {
+          //   if (((42 + r * 5) % 12) === targetPitchClass) {
+          //     tempBass.push(r + ",4")
+          //   }
+          //   if (((42 + r * 5 + 4) % 12) === targetPitchClass) {
+          //     tempBass.push(r + ",5")
+          //   }
+          // }
+        // } else if (bassPitches.length >= 3) {
+        //   bassPitches.sort(function(a, b) { return a - b })
+        //   var normalized = []
+        //   for (var k = 0; k < bassPitches.length; k++) {
+        //     var p = bassPitches[k] % 12
+        //     if (normalized.indexOf(p) === -1) normalized.push(p)
+        //   }
+        //   var foundChordCol = -1
+        //   var rootNoteClass = -1
           for (var n = 0; n < normalized.length; n++) {
             var root = normalized[n]
             var mask = 0
@@ -97,7 +150,7 @@ MuseScore {
               if (suffix === "dim" || suffix === "dim7") foundChordCol = 0
               else if (suffix === "7" || suffix === "9") foundChordCol = 1
               else if (suffix === "m" || suffix === "m6" || suffix === "m7") 
-                { foundChordCol = 2 }
+                foundChordCol = 2 
               else if (suffix === "" || suffix === "Maj7") foundChordCol = 3 // major
               break
             }
@@ -105,22 +158,25 @@ MuseScore {
           if (rootNoteClass !== -1) {
             // highlight bass fb & cb columns
             for (var r = 0; r < 12; r++) {
-              if ((mapMelodicBass(r, 4) % 12) === rootNoteClass) {
-                tempBass.push(r + ",4")
-              }
-              if ((mapMelodicBass(r, 5) % 12) == rootNoteClass) {
-                tempBass.push(r + ",5")
-              }
-              if (foundChordCol !== -1 && (mapMelodicBass(
-                r, foundChordCol) % 12) === rootNoteClass) {
-                // r, 5 - foundChordCol) % 12) === rootNoteClass) {
-                tempBass.push(r + "," + foundChordCol)
-                // tempBass.push(r + "," + (5 - foundChordCol))
+              var fbPitchClass = (42 + r * 5) % 12
+              // var cbPitchClass = (42 + r * 5 + 4) % 12
+              if (fbPitchClass === rootNoteClass) {
+                // tempBass.push(r + ",4")
+                if (foundChordCol !== -1) {
+                  tempBass.push(r + "," + foundChordCol)
+                }
               }
             }
           }
+        } else if (bassPitches.length === 1) {
+          var targetPitchClass = bassPitches[0] % 12
+          for (var r = 0; r < 12; r++) {
+            if (((42 + r * 5) % 12) === targetPitchClass) tempBass.push(r + ",4")
+            if (((42 + r * 5 + 4) % 12) === targetPitchClass) tempBass.push(r + ",5")
+          }
         }
       } 
+    }  
     trebleActivePitches = tempTreble
     bassActiveButtons = tempBass
     }
@@ -137,12 +193,12 @@ MuseScore {
   property int textLeftPadding: 19 
   property int tooltipDelay: 999
   // buttonboard : treble
-  property var trebleLayout: []  // to be populated with button objects
+  // property var trebleLayout: []  // to be populated with button objects
   property int buttonSize: 36 
   property int buttonSpacing: 4
   property int buttonFontSize: 34 
   // bass
-  property var bassLayout: []
+  // property var bassLayout: []
   property var bassBtnSize: 36
   property var bassBtnSpacing: 3
   property var bassBtnFontSize: 34
@@ -159,10 +215,10 @@ MuseScore {
   // buttonboard bass layouts
   property var bassLayouts: [ // name, lowest note, offset from lowest = start MIDI
     { name: "minor 3rds",start: 54, offset: [0, 1, 2, 3, 4], vStep: 3 }, // C-griff Europe mirror
-    { name: "Bayan", start: 54, offset: [29, 28, 27, 26, 4], vStep: -3 }, // todo C-griff 2
-    { name: "5ths", start: 54, offset: [24, 28, 12, 16, 4], vStep: 5 }, // todo B-griff Bayan
-    { name: "N. Europe", start: 54, offset: [-1, 1, 3, 5, 4], vStep: 3 }, // todo B-griff Finland ; b-griff baan mirror
-    { name: "Finnish", start: 54, offset: [-1, 0, 1, 2, 4], vStep: 3 }, // todo D-griff 1
+    { name: "Bayan", start: 54, offset: [29, 28, 27, 26, 4], vStep: -3 },
+    { name: "5ths", start: 54, offset: [24, 28, 12, 16, 4], vStep: 5 }, // todo double-check
+    { name: "N. Europe", start: 54, offset: [-1, 1, 3, 5, 4], vStep: 3 }, // b-griff bayan mirror
+    { name: "Finnish", start: 54, offset: [-1, 0, 1, 2, 4], vStep: 3 },
   ]
   property var selectedBassLayout: bassLayouts[0]
   readonly property var chordMap: { // bitmask matrix
@@ -192,27 +248,19 @@ MuseScore {
   function mapButtonToMidi(row, col) {
     var base = selectedLayout.start
     var off = selectedLayout.offset[col]
-    // var step todo skip / delete ???
     return (base + off) + (row * 3)
   }
   function mapMelodicBass(row, col) {
     var stradellaFB = 42 + (row * 5) // 5ths
     if (!meloBassMode) { // stradella standard
-      switch (col) {
-        case 0: return stradellaFB + 4 // cb
-        case 1: return stradellaFB  // fb
-        case 2: return stradellaFB  // xx
-        case 3: return stradellaFB  // xx
-        case 4: return stradellaFB  // xx
-        case 5: return stradellaFB  // xx
-        default: return 0
-      }
-    } else { // melodic / free bass
-      if (col === 0) return stradellaFB + 4 // 4 semitones from FB to CB
-      if (col === 1) return stradellaFB
+      if (col === 5) return stradellaFB + 4
+      return stradellaFB
+      } else {
+        if (col >= 4) {
+          return (col === 5) ? (stradellaFB + 4) : stradellaFB
+        }
       var base = selectedBassLayout.start
-      var offsetIdx = 5 - col
-      var off = selectedBassLayout.offset[offsetIdx]
+      var off = selectedBassLayout.offset[col]
       var step = selectedBassLayout.vStep
       // bass 3 5ths needs extra lowe
       if (selectedBassLayout.name === "5ths") {
@@ -232,24 +280,24 @@ MuseScore {
     var names = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
     return names[pitch % 12]
   }
-  function initTreble() {
-    var layout = []
-    var rows = 5
-    var cols = 17
-    for (var r = 0; r < rows; r++) {
-      for (var c = 0; c < cols; c++) {
-        layout.push({
-          "row": r,
-          "col": c,
-          "x": c * (buttonSize + buttonSpacing) + (r % 2 * (buttonSize / 2)),
-          "y": r * (buttonSize + buttonSpacing),
-          "pitch": 0, // calculate from buttonboard layout
-          "isWhite": true // naturals
-        })
-      }
-    }
-    trebleLayout = layout
-  }
+  // function initTreble() {
+  //   var layout = []
+  //   var rows = 5
+  //   var cols = 17
+  //   for (var r = 0; r < rows; r++) {
+  //     for (var c = 0; c < cols; c++) {
+  //       layout.push({
+  //         "row": r,
+  //         "col": c,
+  //         "x": c * (buttonSize + buttonSpacing) + (r % 2 * (buttonSize / 2)),
+  //         "y": r * (buttonSize + buttonSpacing),
+  //         "pitch": 0, // calculate from buttonboard layout
+  //         "isWhite": true // naturals
+  //       })
+  //     }
+  //   }
+  //   trebleLayout = layout
+  // }
   function identifyChord(pitches) {
     var normalized = []
     for (var i = 0; i < pitches.length; i++) {
@@ -309,7 +357,7 @@ MuseScore {
       console.log("[addChordText] nothing selected : exiting ...")
       return
     }
-    // find 1st ote or chord to get valid segment
+    // find 1st note of chord to get valid segment
     var firstNote = null
     for (var i = 0; i < selection.length; i++) {
       if (selection[i].type === Element.NOTE) { 
@@ -318,7 +366,7 @@ MuseScore {
       }
     }
     if (!firstNote) {
-      console.log("[addChordText] no firstNorte : exiting ...")
+      console.log("[addChordText] no firstNote : exiting ...")
       return
     }
 
@@ -459,7 +507,7 @@ MuseScore {
         ToolTip.text: qsTr("select bass layout")
         ToolTip.visible: hovered
         ToolTip.delay:tooltipDelay 
-        Layout.preferredWidth: 120
+        // Layout.preferredWidth: 120
         model: bassLayouts
         textRole: "name"
         onActivated: function(index) { selectedBassLayout = bassLayouts[index] }
@@ -469,7 +517,7 @@ MuseScore {
         ToolTip.text: qsTr("select treble layout")
         ToolTip.visible: hovered
         ToolTip.delay:tooltipDelay 
-        Layout.preferredWidth: 120
+        // Layout.preferredWidth: 120
         model: layouts
         textRole: "name"
         onActivated: function(index) { selectedLayout = layouts[index] }
@@ -504,12 +552,12 @@ MuseScore {
                   height: buttonSize
                   radius: buttonSize / 2 
                   // playback highlight
-                  property bool isPlaying: isTreblePitchActive(pitch)
+                  property bool isSelected: isTreblePitchActive(pitch)
                   // calculate pitch
                   property int pitch: mapButtonToMidi(index, colIndex)
                   // determine button color
                   property bool black: isBlackButton(pitch)
-                  color: isPlaying ? highlight1b :
+                  color: isSelected ? highlight1b :
                   (black ? "#333333" : "#eeeeee")
                   border.color: "#777777"
                   border.width: 1
@@ -518,7 +566,7 @@ MuseScore {
                     text: !black ? getNoteName(pitch) : ""
                     visible: !black && showButtonTones // only show naturals
                     font.pixelSize: buttonFontSize
-                    color: (black || isPlaying) ? "white" : "black"
+                    color: (black || isSelected) ? "white" : "black"
                   }
                 }
               }
@@ -555,15 +603,16 @@ MuseScore {
                   height: bassBtnSize
                   radius: bassBtnSize / 2
                   // playback highlight
-                  property bool isPlaying: { 
-                    var coordStr = row + "," + (5 - columnDelegate.col)
+                  property bool isSelected: { 
+                    var coordStr = row + "," + columnDelegate.col
+                    // var coordStr = row + "," + (5 - columnDelegate.col)
                     return bassActiveButtons.indexOf(coordStr) !== -1
-                    // isBassPitchActive(pitch)
                     }
                   // converter logic
-                  property int pitch: mapMelodicBass(row, 5 - columnDelegate.col)
+                  property int pitch: mapMelodicBass(row, columnDelegate.col)
+                  // property int pitch: mapMelodicBass(row, 5 - columnDelegate.col)
                   property bool black: isBlackButton(pitch)
-                  color: isPlaying ? highlight2g : (black ? "#333333" : "#eeeeee")
+                  color: isSelected ? highlight2g : (black ? "#333333" : "#eeeeee")
                   border.color: "#777777"
                   Text {
                     text: {
@@ -585,7 +634,7 @@ MuseScore {
                     font.pixelSize: text.length > 1 ? 
                       bassBtnFontSize * 0.68 : 
                       bassBtnFontSize
-                    color: (black || isPlaying) ? "white" : "black"
+                    color: (black || isSelected) ? "white" : "black"
                     visible: showButtonTones
                     anchors.centerIn: parent
                   }
