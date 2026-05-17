@@ -12,14 +12,51 @@ MuseScore {
   width: 300
   height: 790
   // theme control configuration
-  property bool isDarkTheme: true
+  // property bool isDarkTheme: true
   readonly property color highlight1b: "dodgerblue"
   readonly property color highlight2g: "palegreen"
   // playback tracker
-  property var activePitches: []
+  property var trebleActivePitches: []
+  property var bassActivePitches: []
   onRun: {
-    console.log("hooking into mspees ...")
+    console.log("cba plugin started")
   }
+  function isTreblePitchActive(pitch) {
+    return trebleActivePitches.indexOf(pitch) !== -1
+  }
+  function isBassPitchActive(pitch) {
+    return bassActivePitches.indexOf(pitch) !== -1
+  }
+  // monitor score selection
+  Timer {
+    interval: 200
+    running: true
+    repeat: true
+    onTriggered: {
+      if (!curScore) return
+      var elements = curScore.selection.elements
+      var tempTreble = []
+      var tempBass = []
+      for (var i = 0; i < elements.length; i++) {
+        if (elements[i].type === Element.NOTE) {
+          var pitch = elements[i].pitch
+          var track = elements[i].track
+          if (track >= 0 && track < 4) { // track 0-3 = treble staff
+            if (tempTreble.indexOf(pitch) === -1) {
+              tempTreble.push(pitch)
+            }
+          } else if (track >= 4 && track < 8) {
+            if (tempBass.indexOf(pitch) === -1) {
+              tempBass.push(pitch)
+            }
+          }
+        }
+      }
+    trebleActivePitches = tempTreble
+    bassActivePitches = tempBass
+    }
+  }
+
   // buttonboard options
   property bool meloBassMode: false
   property bool showButtonTones: false
@@ -82,6 +119,7 @@ MuseScore {
     "141":  "sus2",   // sus2
     "1185": "7sus4"   // 7sus4
   }
+
   function mapButtonToMidi(row, col) {
     var base = selectedLayout.start
     var off = selectedLayout.offset[col]
@@ -368,7 +406,7 @@ MuseScore {
         onActivated: function(index) { selectedLayout = layouts[index] }
       }
     }
-    Column {
+    Column { // buttonboards
       id: boardWidget
       // width: parent.width
       width: parent.width
@@ -396,10 +434,10 @@ MuseScore {
                   width:buttonSize 
                   height: buttonSize
                   radius: buttonSize / 2 
+                  // playback highlight
+                  property bool isPlaying: isTreblePitchActive(pitch)
                   // calculate pitch
                   property int pitch: mapButtonToMidi(index, colIndex)
-                  // playback highlight
-                  property bool isPlaying: activePitches.indexOf(pitch) !== -1
                   // determine button color
                   property bool black: isBlackButton(pitch)
                   color: isPlaying ? highlight1b :
@@ -447,10 +485,10 @@ MuseScore {
                   width: bassBtnSize
                   height: bassBtnSize
                   radius: bassBtnSize / 2
+                  // playback highlight
+                  property bool isPlaying: isBassPitchActive(pitch)
                   // converter logic
                   property int pitch: mapMelodicBass(row, 5 - columnDelegate.col)
-                  property bool isPlaying: activePitches.indexOf(pitch) !== -1
-
                   property bool black: isBlackButton(pitch)
                   color: isPlaying ? highlight2g : (black ? "#333333" : "#eeeeee")
                   border.color: "#777777"
