@@ -31,4 +31,9 @@ this project is licensed under the mit license - see the LICENSE file for detail
     <td><img src="imgs/cbaum-bass-stradella.png"></td>
     <td><img src="imgs/cbaum-bass-melo.png"></td>
   </tr>
+  <tr>
+    <td align="center">treble right</td>
+    <td align="center">bass stradella</td>
+    <td align="center">bass melodic / free bass</td>
+  </tr>
 </table>
