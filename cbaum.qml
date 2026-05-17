@@ -7,15 +7,19 @@ MuseScore {
   id: cbaplugin
   version: "1.0"
   description: qsTr("chromatic button accordion")
-  pluginType: "dock"
+  pluginType: "dialog"
   title: qsTr("chromatic button accordion plugin")
   width: 300
   height: 790
+  // theme control configuration
+  property bool isDarkTheme: true
+  readonly property color highlight1b: "dodgerblue"
+  readonly property color highlight2g: "palegreen"
+  // playback tracker
+  property var activePitches: []
   onRun: {
-    console.log("running cba ...")
+    console.log("hooking into mspees ...")
   }
-  // toggable panel for visual buttonboard
-  // property bool panelExpanded: false
   // buttonboard options
   property bool meloBassMode: false
   property bool showButtonTones: false
@@ -394,17 +398,20 @@ MuseScore {
                   radius: buttonSize / 2 
                   // calculate pitch
                   property int pitch: mapButtonToMidi(index, colIndex)
+                  // playback highlight
+                  property bool isPlaying: activePitches.indexOf(pitch) !== -1
                   // determine button color
                   property bool black: isBlackButton(pitch)
-                  color: black ? "#333333" : "#eeeeee"
-                  border.color: "#666666"
+                  color: isPlaying ? highlight1b :
+                  (black ? "#333333" : "#eeeeee")
+                  border.color: "#777777"
                   border.width: 1
                   Text {
                     anchors.centerIn: parent
                     text: !black ? getNoteName(pitch) : ""
                     visible: !black && showButtonTones // only show naturals
                     font.pixelSize: buttonFontSize
-                    color: "black"
+                    color: (black || isPlaying) ? "white" : "black"
                   }
                 }
               }
@@ -442,9 +449,11 @@ MuseScore {
                   radius: bassBtnSize / 2
                   // converter logic
                   property int pitch: mapMelodicBass(row, 5 - columnDelegate.col)
+                  property bool isPlaying: activePitches.indexOf(pitch) !== -1
+
                   property bool black: isBlackButton(pitch)
-                  color: black ? "#333333" : "#eeeeee"
-                  border.color: "#666666"
+                  color: isPlaying ? highlight2g : (black ? "#333333" : "#eeeeee")
+                  border.color: "#777777"
                   Text {
                     text: {
                       if (columnDelegate.col === 4 || columnDelegate.col === 5) {
@@ -465,7 +474,7 @@ MuseScore {
                     font.pixelSize: text.length > 1 ? 
                       bassBtnFontSize * 0.68 : 
                       bassBtnFontSize
-                    color: black ? "white" : "black"
+                    color: (black || isPlaying) ? "white" : "black"
                     visible: showButtonTones
                     anchors.centerIn: parent
                   }
