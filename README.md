@@ -24,8 +24,8 @@ license
 
 this project is licensed under the mit license - see the LICENSE file for details.
 
-1[image](imgs/cbaum-treble.png) 
+1[image](/imgs/cbaum-treble.png) 
 
-2[image](imgs/cbaum-bass-stradella.png) 
+2[image](/imgs/cbaum-bass-stradella.png) 
 
-3[image](imgs/cbaum-bass-melo.png) 
+3[image](/imgs/cbaum-bass-melo.png) 
