@@ -25,8 +25,8 @@ license
 this project is licensed under the mit license - see the LICENSE file for details.
 <table>
   <tr>
-    <td><img src="imgs/cbaum-treble.png" width="30%"></td>
-    <td><img src="imgs/cbaum-bass-stradella.png" width="30%"></td>
-    <td><img src="imgs/cbaum-bass-melo.png" width="30%"></td>
+    <td><img src="imgs/cbaum-treble.png"></td>
+    <td><img src="imgs/cbaum-bass-stradella.png"></td>
+    <td><img src="imgs/cbaum-bass-melo.png"></td>
   </tr>
 </table>
