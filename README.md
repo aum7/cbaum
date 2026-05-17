@@ -4,21 +4,23 @@ chromatic button accordion plugin
 
 get visual help at first hours of knowing that magnificent instrument of yours
 
+from player perspective
+
 installation
 
-    download the plugin folder or clone repository
+download the plugin folder or clone repository
 
-    unzip it into your musescore plugins directory, ie :
+unzip it into your musescore plugins directory, ie :
     
-windows: C:\Users\[your user name]\Documents\MuseScore4\Plugins\
+    windows: C:\Users\[your user name]\Documents\MuseScore4\Plugins\
 
     macOS: ~/Documents/MuseScore4/Plugins/
 
     linux: ~/Documents/MuseScore4/Plugins/
 
-    enable it via musescore plugin manager
+enable it via musescore plugin manager
 
-    open museScore, go to home > plugins (or plugins > manage plugins...), select the plugin, and click enable.
+open museScore, plugins > manage plugins (or home > plugins ...), select the plugin, and click enable.
 
 license
 

@@ -1,7 +1,7 @@
 import MuseScore 3.0
 import QtQuick 
 import QtQuick.Controls 
-import QtQuick.Layouts
+// import QtQuick.Layouts
 
 MuseScore {
   id: cbaplugin
