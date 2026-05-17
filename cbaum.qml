@@ -14,10 +14,10 @@ MuseScore {
   // theme control configuration
   // property bool isDarkTheme: true
   readonly property color highlight1b: "dodgerblue"
-  readonly property color highlight2g: "palegreen"
+  readonly property color highlight2g: "darkgreen" // "palegreen"
   // playback tracker
   property var trebleActivePitches: []
-  property var bassActivePitches: []
+  property var bassActiveButtons: []
   onRun: {
     console.log("cba plugin started")
   }
@@ -36,7 +36,7 @@ MuseScore {
       if (!curScore) return
       var elements = curScore.selection.elements
       var tempTreble = []
-      var tempBass = []
+      var bassPitches = []
       for (var i = 0; i < elements.length; i++) {
         if (elements[i].type === Element.NOTE) {
           var pitch = elements[i].pitch
@@ -45,21 +45,90 @@ MuseScore {
             if (tempTreble.indexOf(pitch) === -1) {
               tempTreble.push(pitch)
             }
-          } else if (track >= 4 && track < 8) {
-            if (tempBass.indexOf(pitch) === -1) {
-              tempBass.push(pitch)
+          } else if (track >= 4 && track < 8) { // bass staff
+            if (bassPitches.indexOf(pitch) === -1) {
+              bassPitches.push(pitch)
             }
           }
         }
       }
+      var tempBass = [] // split into stradella & melodic bass
+      if (meloBassMode) { // match exact pitches across all board buttons
+        if (bassPitches.length === 1) {
+          var targetPitch = bassPitches[0]
+          for (var r = 0; r < 12; r++) {
+            for (var c = 0; c < 6; c++) {
+              if (mapMelodicBass(r, c) === targetPitch) {
+                tempBass.push(r + "," + c)
+              }
+            }
+          }
+        }
+      } else { // stradella
+        if (bassPitches.length === 1) { // single notes @ fb & cb
+          var targetPitchClass = bassPitches[0] % 12
+          for (var r = 0; r < 12; r++) {
+            if ((mapMelodicBass(r, 4) % 12) === targetPitchClass) {
+              tempBass.push(r + ",4")
+            }
+            if ((mapMelodicBass(r, 5) % 12) === targetPitchClass) {
+              tempBass.push(r + ",5")
+            }
+          }
+        } else if (bassPitches.length >= 3) {
+          bassPitches.sort(function(a, b) { return a - b })
+          var normalized = []
+          for (var k = 0; k < bassPitches.length; k++) {
+            var p = bassPitches[k] % 12
+            if (normalized.indexOf(p) === -1) normalized.push(p)
+          }
+          var foundChordCol = -1
+          var rootNoteClass = -1
+          for (var n = 0; n < normalized.length; n++) {
+            var root = normalized[n]
+            var mask = 0
+            for (var j = 0; j < normalized.length; j++) {
+              var interval = (normalized[j] - root + 12) % 12
+              mask |= (1 << interval)
+            }
+            if (chordMap[mask] !== undefined) {
+              var suffix = chordMap[mask]
+              rootNoteClass = root
+              if (suffix === "dim" || suffix === "dim7") foundChordCol = 0
+              else if (suffix === "7" || suffix === "9") foundChordCol = 1
+              else if (suffix === "m" || suffix === "m6" || suffix === "m7") 
+                { foundChordCol = 2 }
+              else if (suffix === "" || suffix === "Maj7") foundChordCol = 3 // major
+              break
+            }
+          }
+          if (rootNoteClass !== -1) {
+            // highlight bass fb & cb columns
+            for (var r = 0; r < 12; r++) {
+              if ((mapMelodicBass(r, 4) % 12) === rootNoteClass) {
+                tempBass.push(r + ",4")
+              }
+              if ((mapMelodicBass(r, 5) % 12) == rootNoteClass) {
+                tempBass.push(r + ",5")
+              }
+              if (foundChordCol !== -1 && (mapMelodicBass(
+                r, foundChordCol) % 12) === rootNoteClass) {
+                // r, 5 - foundChordCol) % 12) === rootNoteClass) {
+                tempBass.push(r + "," + foundChordCol)
+                // tempBass.push(r + "," + (5 - foundChordCol))
+              }
+            }
+          }
+        }
+      } 
     trebleActivePitches = tempTreble
-    bassActivePitches = tempBass
+    bassActiveButtons = tempBass
     }
   }
 
   // buttonboard options
   property bool meloBassMode: false
-  property bool showButtonTones: false
+  property bool showButtonTones: true 
   property bool showFingering: false
   property bool showTreble: false
   // property string currentLayout: "C-griff Europe" // not used
@@ -486,7 +555,11 @@ MuseScore {
                   height: bassBtnSize
                   radius: bassBtnSize / 2
                   // playback highlight
-                  property bool isPlaying: isBassPitchActive(pitch)
+                  property bool isPlaying: { 
+                    var coordStr = row + "," + (5 - columnDelegate.col)
+                    return bassActiveButtons.indexOf(coordStr) !== -1
+                    // isBassPitchActive(pitch)
+                    }
                   // converter logic
                   property int pitch: mapMelodicBass(row, 5 - columnDelegate.col)
                   property bool black: isBlackButton(pitch)
