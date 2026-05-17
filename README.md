@@ -23,9 +23,10 @@ windows: C:\Users\[your user name]\Documents\MuseScore4\Plugins\
 license
 
 this project is licensed under the mit license - see the LICENSE file for details.
-
-![image](/imgs/cbaum-treble.png) 
-
-![image](/imgs/cbaum-bass-stradella.png) 
-
-![image](/imgs/cbaum-bass-melo.png) 
+<table>
+  <tr>
+    <td><img src="imgs/cbaum-treble.png" width="30%"></td>
+    <td><img src="imgs/cbaum-bass-stradella.png" width="30%"></td>
+    <td><img src="imgs/cbaum-bass-melo.png" width="30%"></td>
+  </tr>
+</table>
