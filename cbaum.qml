@@ -37,15 +37,20 @@ MuseScore {
       var elements = curScore.selection.elements
       var tempTreble = []
       var bassPitches = []
+      // auto-show buttonboard from notes selection
+      var isTrebleStaff = false
+      var isBassStaff = false
       for (var i = 0; i < elements.length; i++) {
         if (elements[i].type === Element.NOTE) {
           var pitch = elements[i].pitch
           var track = elements[i].track
           if (track >= 0 && track < 4) { // track 0-3 = treble staff
+            showTreble = true
             if (tempTreble.indexOf(pitch) === -1) {
               tempTreble.push(pitch)
             }
           } else if (track >= 4 && track < 8) { // bass staff
+            showTreble = false
             if (bassPitches.indexOf(pitch) === -1) {
               bassPitches.push(pitch)
             }
@@ -55,7 +60,7 @@ MuseScore {
       var tempBass = [] // split into stradella & melodic bass
       if (meloBassMode) { // match exact pitches across all board buttons
         for (var i = 0; i < bassPitches.length; i++) {
-          var targetPitch = bassPitches[i]
+          var targetPitch = bassPitches[i] - bassOctaveOffset
           for (var r = 0; r < 12; r++) {
             for (var c = 0; c < 4; c++) {
               if (mapMelodicBass(r, c) === targetPitch) {
@@ -111,32 +116,6 @@ MuseScore {
           }
           var foundChordCol = -1
           var rootNoteClass = -1
-      //     for (var n = 0; n < normalized.length; n++) {
-      //       var root = normalized[n]
-      //       var mask = 0
-      //       for (var j = )
-      //     }
-      //   }
-      // }
-        // if (bassPitches.length === 1) { // single notes @ fb & cb
-          // var targetPitchClass = bassPitches[0] % 12
-          // for (var r = 0; r < 12; r++) {
-          //   if (((42 + r * 5) % 12) === targetPitchClass) {
-          //     tempBass.push(r + ",4")
-          //   }
-          //   if (((42 + r * 5 + 4) % 12) === targetPitchClass) {
-          //     tempBass.push(r + ",5")
-          //   }
-          // }
-        // } else if (bassPitches.length >= 3) {
-        //   bassPitches.sort(function(a, b) { return a - b })
-        //   var normalized = []
-        //   for (var k = 0; k < bassPitches.length; k++) {
-        //     var p = bassPitches[k] % 12
-        //     if (normalized.indexOf(p) === -1) normalized.push(p)
-        //   }
-        //   var foundChordCol = -1
-        //   var rootNoteClass = -1
           for (var n = 0; n < normalized.length; n++) {
             var root = normalized[n]
             var mask = 0
@@ -144,7 +123,7 @@ MuseScore {
               var interval = (normalized[j] - root + 12) % 12
               mask |= (1 << interval)
             }
-            if (chordMap[mask] !== undefined) {
+            if (chordMap[mask] !== undefined) { // check against chord map
               var suffix = chordMap[mask]
               rootNoteClass = root
               if (suffix === "dim" || suffix === "dim7") foundChordCol = 0
@@ -159,9 +138,7 @@ MuseScore {
             // highlight bass fb & cb columns
             for (var r = 0; r < 12; r++) {
               var fbPitchClass = (42 + r * 5) % 12
-              // var cbPitchClass = (42 + r * 5 + 4) % 12
               if (fbPitchClass === rootNoteClass) {
-                // tempBass.push(r + ",4")
                 if (foundChordCol !== -1) {
                   tempBass.push(r + "," + foundChordCol)
                 }
@@ -183,22 +160,21 @@ MuseScore {
   }
 
   // buttonboard options
-  property bool meloBassMode: false
+  property bool meloBassMode: true
   property bool showButtonTones: true 
   property bool showFingering: false
   property bool showTreble: false
-  // property string currentLayout: "C-griff Europe" // not used
+  // bass range shift
+  property int bassOctaveOffset
   // mysterious options
   property int rowLeftMargin: 7
   property int textLeftPadding: 19 
   property int tooltipDelay: 999
   // buttonboard : treble
-  // property var trebleLayout: []  // to be populated with button objects
   property int buttonSize: 36 
   property int buttonSpacing: 4
   property int buttonFontSize: 34 
   // bass
-  // property var bassLayout: []
   property var bassBtnSize: 36
   property var bassBtnSpacing: 3
   property var bassBtnFontSize: 34
@@ -280,24 +256,6 @@ MuseScore {
     var names = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
     return names[pitch % 12]
   }
-  // function initTreble() {
-  //   var layout = []
-  //   var rows = 5
-  //   var cols = 17
-  //   for (var r = 0; r < rows; r++) {
-  //     for (var c = 0; c < cols; c++) {
-  //       layout.push({
-  //         "row": r,
-  //         "col": c,
-  //         "x": c * (buttonSize + buttonSpacing) + (r % 2 * (buttonSize / 2)),
-  //         "y": r * (buttonSize + buttonSpacing),
-  //         "pitch": 0, // calculate from buttonboard layout
-  //         "isWhite": true // naturals
-  //       })
-  //     }
-  //   }
-  //   trebleLayout = layout
-  // }
   function identifyChord(pitches) {
     var normalized = []
     for (var i = 0; i < pitches.length; i++) {
@@ -481,46 +439,55 @@ MuseScore {
         } 
       }
       // show treble (default) vs bass buttonboard
-      CheckBox {
-        text: qsTr("treble")
-        ToolTip.text: qsTr("show treble (default) vs bass buttonboard")
-        ToolTip.visible: hovered
-        ToolTip.delay: tooltipDelay 
-        checked: showTreble
-        onCheckedChanged: showTreble = checked
-        contentItem: Text {
-          text: parent.text
-          color: "white"
-          leftPadding: textLeftPadding
-          verticalAlignment: Text.AlignVCenter
-        } 
-      }
+      // CheckBox {
+      //   text: qsTr("treble")
+      //   ToolTip.text: qsTr("show treble (default) vs bass buttonboard")
+      //   ToolTip.visible: hovered
+      //   ToolTip.delay: tooltipDelay 
+      //   checked: showTreble
+      //   onCheckedChanged: showTreble = checked
+      //   contentItem: Text {
+      //     text: parent.text
+      //     color: "white"
+      //     leftPadding: textLeftPadding
+      //     verticalAlignment: Text.AlignVCenter
+      //   } 
+      // }
     }
     // row 3 
     Row { // layout selection
       id: row3
       height: 40
-      spacing: 18
+      spacing: 4
       anchors.horizontalCenter: parent.horizontalCenter
       ComboBox { // bass selector
         id: bassSelector
         ToolTip.text: qsTr("select bass layout")
         ToolTip.visible: hovered
-        ToolTip.delay:tooltipDelay 
-        // Layout.preferredWidth: 120
+        ToolTip.delay: tooltipDelay 
         model: bassLayouts
         textRole: "name"
         onActivated: function(index) { selectedBassLayout = bassLayouts[index] }
+      }
+      ComboBox { // 8ve selector
+        id: octaveSelector
+        width: 36
+        ToolTip.text: qsTr("select lowest bass 8ve\n0=3rd | -12=2nd | -24=1st
+          \nfor melodic / free bass only")
+        ToolTip.visible: hovered
+        ToolTip.delay: tooltipDelay 
+        model: [+24, +12, 0, -12, -24]
+        // textRole: "name"
+        onActivated: function(index) { bassOctaveOffset = model[index] }
       }
       ComboBox { // treble selector
         id: trebleSelector
         ToolTip.text: qsTr("select treble layout")
         ToolTip.visible: hovered
-        ToolTip.delay:tooltipDelay 
-        // Layout.preferredWidth: 120
+        ToolTip.delay: tooltipDelay 
         model: layouts
         textRole: "name"
-        onActivated: function(index) { selectedLayout = layouts[index] }
+        onActivated: function(index) { bassOctaveOffset = bassOctaveOffset[index] }
       }
     }
     Column { // buttonboards
