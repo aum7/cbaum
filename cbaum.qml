@@ -9,20 +9,83 @@ MuseScore {
   pluginType: "dialog"
   title: qsTr("chromatic button accordion plugin")
   width: 300
-  height: 790
+  height: 790 
+  // height: showButtonboard ? 790 : 65
+  onRun: {
+    console.log("cba plugin started")
+  }
   // toggle buttonboard visibility
-  property bool showButtonboard: true
+  property bool showButtonboard: false 
+  property int comboWidth: 110
   // color configuration
   readonly property color highlight1b: "dodgerblue"
   readonly property color highlight2g: "darkgreen" // "palegreen"
   // playback tracker
   property var trebleActivePitches: []
-  property var bassActiveButtons: []
-  onRun: {
-    console.log("cba plugin started")
-  }
-  function isTreblePitchActive(pitch) { // could be simplified - single user
-    return trebleActivePitches.indexOf(pitch) !== -1
+  property var bassActivePitches: []
+  // function isTreblePitchActive(pitch) { // could be simplified - single user
+  //   return trebleActivePitches.indexOf(pitch) !== -1
+  // }
+  // buttonboard options
+  property bool meloBassMode: true
+  property bool showButtonTones: true 
+  property bool showFingering: false
+  property bool showTreble: false
+  // bass range shift
+  property int bassOctaveShift
+  // mysterious options
+  property int rowLeftMargin: 7
+  property int textLeftPadding: 19 
+  property int tooltipDelay: 999
+  // buttonboard : treble
+  property int buttonSize: 36 
+  property int buttonSpacing: 4
+  property int buttonFontSize: 34 
+  // bass
+  property var bassBtnSize: 36
+  property var bassBtnSpacing: 3
+  property var bassBtnFontSize: 34
+  // buttonboard treble layouts
+  property var layouts: [ // name, lowest note, offset from lowest = start MIDI
+    { name: "C-griff Europe",start: 55, offset: [0, -1, 1, 0, 2] }, 
+    { name: "C-griff 2", start: 56, offset: [3, 1, 2, 0, 1] },
+    { name: "B-griff Bayan", start: 55, offset: [3, 1, 2, 0, 1] }, 
+    { name: "B-griff Finland", start: 55, offset: [1, 0, 2, 1, 3] },
+    { name: "D-griff 1", start: 53, offset: [1, 0, 2, 1, 3] },
+    { name: "D-griff 2", start: 55, offset: [2, 0, 1, -1, 0] }
+  ]
+  property var selectedLayout: layouts[0]
+  // buttonboard bass layouts
+  property var bassLayouts: [ // name, lowest note, offset from lowest = start MIDI
+    { name: "minor 3rds",start: 54, offset: [0, 1, 2, 3, 4], vStep: 3 }, // C-griff Europe mirror
+    { name: "Bayan", start: 54, offset: [29, 28, 27, 26, 4], vStep: -3 },
+    { name: "5ths", start: 54, offset: [24, 28, 12, 16, 4], vStep: 5 }, // todo double-check
+    { name: "N. Europe", start: 54, offset: [-1, 1, 3, 5, 4], vStep: 3 }, // b-griff bayan mirror
+    { name: "Finnish", start: 54, offset: [-1, 0, 1, 2, 4], vStep: 3 },
+  ]
+  property var selectedBassLayout: bassLayouts[0]
+  readonly property var chordMap: { // bitmask matrix
+    // basic
+    "145":  "",       // major
+    "137":  "m",      // minor
+    "273":  "aug",    // aug
+    "73":   "dim",    // dim
+    "585":  "dim7",   // dim7
+    // 7s & 6s
+    "1169": "7",      // 7
+    "1041": "7",      // 7 with dropped 5th
+    "2193": "Maj7",   // Maj7
+    "2065": "Maj7",   // Maj7 with dropped 5th
+    "1161": "m7",     // m7
+    "1033": "m7",     // m7 with drepped 5th
+    "1097": "m7b5",   // m7b5
+    "657":  "6",      // 6
+    "649":  "m6",     // m6
+    "1173": "9",      // 9
+    // suspended
+    "161":  "sus4",   // sus4
+    "141":  "sus2",   // sus2
+    "1185": "7sus4"   // 7sus4
   }
   // monitor score selection
   Timer {
@@ -35,8 +98,6 @@ MuseScore {
       var tempTreble = []
       var bassPitches = []
       // auto-show buttonboard from notes selection
-      var isTrebleStaff = false
-      var isBassStaff = false
       for (var i = 0; i < elements.length; i++) {
         if (elements[i].type === Element.NOTE) {
           var pitch = elements[i].pitch
@@ -58,7 +119,7 @@ MuseScore {
       if (meloBassMode) { // match exact pitches across all board buttons
         for (var i = 0; i < bassPitches.length; i++) {
           // allow for shifting octaves, as 5 bass layouts span 5th > 2nd octave
-          var targetPitch = bassPitches[i] - bassOctaveOffset
+          var targetPitch = bassPitches[i] - bassOctaveShift
           for (var r = 0; r < 12; r++) {
             for (var c = 0; c < 4; c++) {
               if (mapMelodicBass(r, c) === targetPitch) {
@@ -153,72 +214,9 @@ MuseScore {
       } 
     }  
     trebleActivePitches = tempTreble
-    bassActiveButtons = tempBass
+    bassActivePitches = tempBass
     }
   }
-
-  // buttonboard options
-  property bool meloBassMode: true
-  property bool showButtonTones: true 
-  property bool showFingering: false
-  property bool showTreble: false
-  // bass range shift
-  property int bassOctaveOffset
-  // mysterious options
-  property int rowLeftMargin: 7
-  property int textLeftPadding: 19 
-  property int tooltipDelay: 999
-  // buttonboard : treble
-  property int buttonSize: 36 
-  property int buttonSpacing: 4
-  property int buttonFontSize: 34 
-  // bass
-  property var bassBtnSize: 36
-  property var bassBtnSpacing: 3
-  property var bassBtnFontSize: 34
-  // buttonboard treble layouts
-  property var layouts: [ // name, lowest note, offset from lowest = start MIDI
-    { name: "C-griff Europe",start: 55, offset: [0, -1, 1, 0, 2] }, 
-    { name: "C-griff 2", start: 56, offset: [3, 1, 2, 0, 1] },
-    { name: "B-griff Bayan", start: 55, offset: [3, 1, 2, 0, 1] }, 
-    { name: "B-griff Finland", start: 55, offset: [1, 0, 2, 1, 3] },
-    { name: "D-griff 1", start: 53, offset: [1, 0, 2, 1, 3] },
-    { name: "D-griff 2", start: 55, offset: [2, 0, 1, -1, 0] }
-  ]
-  property var selectedLayout: layouts[0]
-  // buttonboard bass layouts
-  property var bassLayouts: [ // name, lowest note, offset from lowest = start MIDI
-    { name: "minor 3rds",start: 54, offset: [0, 1, 2, 3, 4], vStep: 3 }, // C-griff Europe mirror
-    { name: "Bayan", start: 54, offset: [29, 28, 27, 26, 4], vStep: -3 },
-    { name: "5ths", start: 54, offset: [24, 28, 12, 16, 4], vStep: 5 }, // todo double-check
-    { name: "N. Europe", start: 54, offset: [-1, 1, 3, 5, 4], vStep: 3 }, // b-griff bayan mirror
-    { name: "Finnish", start: 54, offset: [-1, 0, 1, 2, 4], vStep: 3 },
-  ]
-  property var selectedBassLayout: bassLayouts[0]
-  readonly property var chordMap: { // bitmask matrix
-    // basic
-    "145":  "",       // major
-    "137":  "m",      // minor
-    "273":  "aug",    // aug
-    "73":   "dim",    // dim
-    "585":  "dim7",   // dim7
-    // 7s & 6s
-    "1169": "7",      // 7
-    "1041": "7",      // 7 with dropped 5th
-    "2193": "Maj7",   // Maj7
-    "2065": "Maj7",   // Maj7 with dropped 5th
-    "1161": "m7",     // m7
-    "1033": "m7",     // m7 with drepped 5th
-    "1097": "m7b5",   // m7b5
-    "657":  "6",      // 6
-    "649":  "m6",     // m6
-    "1173": "9",      // 9
-    // suspended
-    "161":  "sus4",   // sus4
-    "141":  "sus2",   // sus2
-    "1185": "7sus4"   // 7sus4
-  }
-
   function mapButtonToMidi(row, col) {
     var base = selectedLayout.start
     var off = selectedLayout.offset[col]
@@ -325,17 +323,31 @@ MuseScore {
       console.log("[addChordText] no firstNote : exiting ...")
       return
     }
+    console.log("[addChordText] firstNote=" + firstNote)
+    console.log("[addChordText] firstNote.track=" + firstNote.track)
 
     curScore.startCmd()
     var cursor = curScore.newCursor()
-    cursor.track = firstNote.track // point specific staff & voice
-    cursor.inputStateMode = Cursor.INPUT_STATE_SYNC_WITH_SCORE // get segment
-    var targetTick = firstNote.parent.parent.tick // segment
-
-    cursor.rewind(0)  // start of score
-    while (cursor.segment && cursor.tick < targetTick) {
-      cursor.next()
+    cursor.track = showTreble ? 0 : 4  // point auto-assigned track
+    console.log("[addChordText] cursor.track=" + cursor.track)
+    cursor.rewind(Cursor.SELECTION_START)  // start of score
+    // cursor.track = firstNote.track // point specific staff & voice
+    // cursor.inputStateMode = Cursor.INPUT_STATE_SYNC_WITH_SCORE // get segment
+    // cursor.rewind(0)  // start of score
+    if (cursor.segmen && cursor.tick !== firstNote.parent.parent.tick) {
+      var segment = firstNote.parent.parent
+      if (segment) {
+        var text = newElement(Element.STAFF_TEXT)
+        text.text = chord
+        segment.add(text)
+        curScore.endCmd()
+        return
+      }
     }
+    // var targetTick = firstNote.parent.parent.tick // segment
+    // while (cursor.segment && cursor.tick < targetTick) {
+    //   cursor.next()
+    // }
     // inject
     var text = newElement(Element.STAFF_TEXT)
     text.text = chord
@@ -348,12 +360,14 @@ MuseScore {
   // funcions end
   Column { // has single column
     id: mainWidget
+    width: cbaplugin.width
+    // width: parent.width
+    height: cbaplugin.height
     anchors.fill: parent
-    width: parent.width
     // color: "transparent"
     Row { // chord identifier
       id: row1
-      height: 30 // Hard fixed height
+      height: 30 // Hard fixed height todo dynamic height ???
       spacing: 4
       anchors.horizontalCenter: parent.horizontalCenter
       Button {
@@ -388,7 +402,7 @@ MuseScore {
     Rectangle {
       id: handleBackground
       width: parent.width
-      height: 22
+      height: 22  // also fixed height todo also dynamic height ???
       color: "#1b1b1b"
       Rectangle {
         id:toggleHandle
@@ -411,7 +425,10 @@ MuseScore {
       id:toggleButtonboard
       width: parent.width
       visible: showButtonboard
-      spacing: mainWidget.spacing
+      height: showButtonboard ? 725 : 0
+      // height: showButtonboard ? implicitHeight : 0
+      spacing: showButtonboard ? 10 : 0
+      // spacing: mainWidget.spacing
       // row2 
       Row { // checkboxes
         id: row2
@@ -473,6 +490,7 @@ MuseScore {
         anchors.horizontalCenter: parent.horizontalCenter
         ComboBox { // bass selector
           id: bassSelector
+          width:comboWidth 
           ToolTip.text: qsTr("select bass layout")
           ToolTip.visible: hovered
           ToolTip.delay: tooltipDelay 
@@ -482,34 +500,39 @@ MuseScore {
         }
         ComboBox { // 8ve selector
           id: octaveSelector
-          width: 36
-          ToolTip.text: qsTr("select lowest bass 8ve\n0=3rd | -12=2nd | -24=1st
+          width: 52
+          ToolTip.text: qsTr("select bass 8ve\n24=5th | .. | 0=3rd | .. | -24=1st
             \nfor melodic / free bass only")
           ToolTip.visible: hovered
           ToolTip.delay: tooltipDelay 
-          model: [+24, +12, 0, -12, -24]
-          onActivated: function(index) { bassOctaveOffset = model[index] }
+          model: [24, 12, 0, -12, -24]
+          onActivated: function(index) { bassOctaveShift = model[index] }
         }
         ComboBox { // treble selector
           id: trebleSelector
+          width: comboWidth
           ToolTip.text: qsTr("select treble layout")
           ToolTip.visible: hovered
           ToolTip.delay: tooltipDelay 
           model: layouts
           textRole: "name"
-          onActivated: function(index) { bassOctaveOffset = bassOctaveOffset[index] }
+          onActivated: function(index) { bassOctaveShift = bassOctaveShift[index] }
         }
       }
       Column { // buttonboards
         id: boardWidget
         width: parent.width
         spacing: 20
+        // color: "transparent" // rejected code
+        // todo height not set ???
         // treble board
+        // Rectangle {
         Item {
-          id: trebleBoard
+          id: trebleBrdItem
           width: parent.width
-          // height: trebleRow.height
-          height: showTreble ? trebleRow.height : 0
+          height: trebleRow.height
+          // height: showTreble ? 725 : 0
+          // height: showTreble ? trebleRow.height : 0 // todo works properly
           visible: showTreble
           Row {
             id: trebleRow
@@ -528,7 +551,7 @@ MuseScore {
                     height: buttonSize
                     radius: buttonSize / 2 
                     // playback highlight
-                    property bool isSelected: isTreblePitchActive(pitch)
+                    property bool isSelected: trebleActivePitches.indexOf(pitch) !== -1
                     // calculate pitch
                     property int pitch: mapButtonToMidi(index, colIndex)
                     // determine button color
@@ -551,10 +574,12 @@ MuseScore {
           }
         }
         // bass board
+        // Rectangle { // accidentals included
         Item { // accidentals included
-          id: bassBoard
+          id: bassBrdItem
           width: parent.width
-          height: !showTreble ? bassRow.height : 0
+          // height: !showTreble ? 725 : 0
+          height: !showTreble ? bassRow.height : 0 // todo works proper
           visible: !showTreble
           Row {
             id: bassRow
@@ -580,7 +605,7 @@ MuseScore {
                     // highlight when selected by user
                     property bool isSelected: { 
                       var coordStr = row + "," + columnDelegate.col
-                      return bassActiveButtons.indexOf(coordStr) !== -1
+                      return bassActivePitches.indexOf(coordStr) !== -1
                       }
                     // converter logic
                     property int pitch: mapMelodicBass(row, columnDelegate.col)
