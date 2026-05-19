@@ -764,7 +764,7 @@ MuseScore {
           ToolTip.visible: hovered
           ToolTip.delay: tooltipDelay 
           model: [24, 12, 0, -12, -24]
-          onActivated: function(index) { bassOctaveShift = model[index] }
+          onActivated: function(index) { bass8veShift = model[index] }
         }
       }
       Column { // buttonboards
