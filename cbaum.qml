@@ -1,21 +1,26 @@
+// musescore 4.7 plugin - chromatic button accordion notes-to-buttons
 import MuseScore 3.0
 import QtQuick 
 import QtQuick.Controls 
+import QtQuick.Window
 
 MuseScore {
   id: cbaplugin
   version: "1.0"
-  description: qsTr("chromatic button accordion")
+  description: qsTr("chromatic button accordion visual helper")
   pluginType: "dialog"
   title: qsTr("chromatic button accordion plugin")
   width: 300
-  height: 790 
-  // height: showButtonboard ? 790 : 65
+  height: pluginHeight 
   onRun: {
     console.log("cba plugin started")
   }
+  property var lastClickTime: 0
+  property var doubleClickSpeed: 700
   // toggle buttonboard visibility
-  property bool showButtonboard: false 
+  property int pluginHeight: 816
+  property bool showButtonboard: true 
+  property int btnBoardHeight: 70
   property int comboWidth: 110
   // color configuration
   readonly property color highlight1b: "dodgerblue"
@@ -23,16 +28,13 @@ MuseScore {
   // playback tracker
   property var trebleActivePitches: []
   property var bassActivePitches: []
-  // function isTreblePitchActive(pitch) { // could be simplified - single user
-  //   return trebleActivePitches.indexOf(pitch) !== -1
-  // }
   // buttonboard options
   property bool meloBassMode: true
   property bool showButtonTones: true 
   property bool showFingering: false
   property bool showTreble: false
   // bass range shift
-  property int bassOctaveShift
+  property int bassOctaveShift: 0
   // mysterious options
   property int rowLeftMargin: 7
   property int textLeftPadding: 19 
@@ -92,16 +94,21 @@ MuseScore {
     interval: 200
     running: true
     repeat: true
+    property string lastTonality: ""
     onTriggered: {
       if (!curScore) return
       var elements = curScore.selection.elements
       var tempTreble = []
+      var tempBass = [] // split into stradella & melodic bass
       var bassPitches = []
+      var bassSolo = false
+      var foundChordTonality = ""
       // auto-show buttonboard from notes selection
       for (var i = 0; i < elements.length; i++) {
         if (elements[i].type === Element.NOTE) {
           var pitch = elements[i].pitch
           var track = elements[i].track
+          var text = elements[i].parent
           if (track >= 0 && track < 4) { // track 0-3 = treble staff
             showTreble = true
             if (tempTreble.indexOf(pitch) === -1) {
@@ -112,10 +119,50 @@ MuseScore {
             if (bassPitches.indexOf(pitch) === -1) {
               bassPitches.push(pitch)
             }
+            if (text && text.parent) {
+              var seg = text.parent
+              if (seg.annotations) {
+                for (var j = 0; j < seg.annotations.length; j++) {
+                  var ann = seg.annotations[j]
+                  if (ann.type === Element.STAFF_TEXT) {
+                    var annTxt = ann.text.trim()
+                    var annTxtLower = annTxt.toLowerCase().replace(/\./g, "")
+                    if (annTxtLower === "sb" || annTxtLower === "bs") {
+                      bassSolo = true
+                      console.log("bassSolo !")
+                    } else if (annTxt === "M" || annTxt === "m" ||
+                      annTxt === "7" || annTxt === "o") {
+                        foundChordTonality = annTxt
+                    } else {
+                      // get chord from chord marking above note(s)
+                      var chordMatch = annTxt.match(/^[A-G][#b♮♯♭]?(.*)$/i)
+                      if (chordMatch) {
+                        var suffix = chordMatch[1].trim().toLowerCase()
+                        if (suffix.indexOf("dim") !== -1 || suffix.indexOf("o") !== -1) {
+                          foundChordTonality = "o"
+                        } else if (suffix.indexOf("7") !== -1 || suffix.indexOf("9") !== -1) {
+                          foundChordTonality = "7"
+                        } else if (suffix.indexOf("m") === 0 || suffix.indexOf("min") === 0) {
+                          foundChordTonality = "m"
+                        } else if (suffix === "" || suffix.indexOf("maj") === 0 ||
+                          suffix === "M") {
+                          foundChordTonality = "M"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
-      var tempBass = [] // split into stradella & melodic bass
+      if (foundChordTonality !== "") {
+        console.log("tonality=", foundChordTonality)
+        lastTonality = foundChordTonality
+      } else {
+        foundChordTonality = lastTonality
+      }
       if (meloBassMode) { // match exact pitches across all board buttons
         for (var i = 0; i < bassPitches.length; i++) {
           // allow for shifting octaves, as 5 bass layouts span 5th > 2nd octave
@@ -129,25 +176,33 @@ MuseScore {
           }
         }
       } else { // stradella
-        var bassSolo = false
-        for (var i = 0; i < elements.length; i++) {
-          if (elements[i].type === Element.STAFF_TEXT) {
-            var txt = elements[i].text.toLowerCase().replace(/\./g, "")
-            if (txt === "sb" || txt === "bs") {
-              bassSolo = true
+        if (bassSolo) {
+          for (var i = 0; i < bassPitches.length; i++) {
+            var targetPitchClass = bassPitches[i] % 12
+            for (var r = 0; r < 12; r++) {
+              if (((42 + r * 5) % 12) === targetPitchClass) tempBass.push(r + ",4")
+              if (((42 + r* 5 + 4) % 12) === targetPitchClass) tempBass.push(r + ",5")
             }
           }
-        }
-        if (bassSolo) {
-        for (var i = 0; i < bassPitches.length; i++) {
-          // }
-          var targetPitchClass = bassPitches[i] % 12
+        } else if (foundChordTonality !== "" && bassPitches.length === 1
+          && bassPitches[0] >= 50) {
+          var targetCol = -1
+          if (foundChordTonality === "o") targetCol = 0
+          if (foundChordTonality === "7") targetCol = 1
+          if (foundChordTonality === "m") targetCol = 2
+          if (foundChordTonality === "M") targetCol = 3
+          var targetPitchClass = bassPitches[0] % 12
           for (var r = 0; r < 12; r++) {
-            if (((42 + r * 5) % 12) === targetPitchClass) tempBass.push(r + ",4")
-            if (((42 + r * 5 + 4) % 12) === targetPitchClass) tempBass.push(r + ",5")
+            var fbPitchClass = (42 + r * 5) % 12
+            if (fbPitchClass === targetPitchClass) {
+              if (targetCol !== -1) {
+                tempBass.push(r + "," + targetCol)
+              }
+              tempBass.push(r + ",4")
+              tempBass.push(r + 4 + ",5")
+            }
           }
-        }
-      } else {
+        } else {
         var singleNotes = []
         var chordNotes = []
         for (var i = 0; i < bassPitches.length; i++) {
@@ -160,7 +215,7 @@ MuseScore {
         for (var i = 0; i < singleNotes.length; i++) {
           var targetPitchClass = singleNotes[i] % 12
           for (var r = 0; r < 12; r++) {
-            if (((42 + r * 5) %12) === targetPitchClass) tempBass.push(r + ",4")
+            if (((42 + r * 5) % 12) === targetPitchClass) tempBass.push(r + ",4")
             if (((42 + r * 5 + 4) % 12) === targetPitchClass) tempBass.push(r + ",5")
           }
         }
@@ -217,6 +272,155 @@ MuseScore {
     bassActivePitches = tempBass
     }
   }
+  // fingering text
+  function hideFinger() {
+    if (!curScore || curScore.selection.elements.length === 0) return
+    // start command
+    curScore.startCmd()
+    // cursor for navigation of score
+    var elements = curScore.selection.elements
+    for (var i = 0; i < elements.length; i++) {
+      var note = elements[i]
+      if (note.type != Element.NOTE) continue
+      var existing = getExistingFinger(note)
+      if (existing) {
+        existing.visible = false
+      }
+    }
+    curScore.endCmd()
+  }
+  
+  function getExistingFinger(note) {
+    for (var i = 0; i < note.elements.length; i++) {
+      if (note.elements[i].type == Element.FINGERING) return note.elements[i]
+    }
+    return null
+  }
+
+  function calcFinger(requestAlternate) {
+    if (!curScore || curScore.selection.elements.length === 0) return
+    var sel = curScore.selection
+    if (!sel.startSegment || !sel.endSegment) {
+      console.log("calcFinger : active selection has no proper start / end segments")
+      return
+    }
+    // wrap into commmand
+    curScore.startCmd()
+    var startTick = sel.startSegment.tick
+    var endTick = sel.endSegment.tick
+    // gather melody data
+    var notesSequence = []
+    var cursor = curScore.newCursor()
+    cursor.rewind(Cursor.SELECTION_START)
+    while (cursor.segment && cursor.tick < endTick) {
+      if (cursor.tick >= startTick &&
+        cursor.element && cursor.element.type == Element.CHORD) {
+        var chord = cursor.element
+        if (chord.notes.length > 0) {
+          var topNote = chord.notes[chord.notes.length - 1]
+          notesSequence.push({
+            pitch: topNote.pitch,
+            noteElement: topNote,
+            tick: cursor.tick
+          })
+        }
+      }
+      cursor.next()
+    }
+    // process
+    for (var i = 0; i < notesSequence.length; i++) {
+      var current = notesSequence[i]
+      var note = current.noteElement
+      var prev = (i > 0) ? notesSequence[i - 1] : null
+      var next = (i < notesSequence.length - 1) ? notesSequence[i + 1] : null
+      // detect direction for closer-to rule
+      var direction = 0 // 0=stable 1=higher note next -1=lower note next
+      if (next) {
+        if (next.pitch > current.pitch) direction = 1
+        else if (next.pitch < current.pitch) direction = -1
+      }
+      // lookahead to catch 3-note chromatic run
+      var isChromatic = (next && prev) &&
+        (Math.abs(current.pitch - prev.pitch) == 1 &&
+        Math.abs(next.pitch - current.pitch) == 1)
+      // internal logic engines
+      var existing = getExistingFinger(note)
+      if (existing) {
+        existing.visible = true
+        if (requestAlternate) {
+          existing.text = getFinger(current.pitch, direction, isChromatic,
+            requestAlternate, prev, next)
+        }
+      } else {
+        var fingerText = newElement(Element.FINGERING)
+        fingerText.text = getFinger(current.pitch, direction, isChromatic,
+          requestAlternate, prev, next)
+        fingerText.placement = Placement.ABOVE  
+        note.add(fingerText)
+      }
+    }
+    curScore.endCmd()
+  }
+  
+  function getFinger(pitch, direction, isChromatic, requestAlternate, prev, next) {
+    var noteClass = pitch % 12
+    var cFingr = "3"
+    var bFinger = "3"
+    // alternate logic : direction-based priority
+    if (requestAlternate) {
+      if (direction === 1) {
+        cFinger = (noteClass % 2 === 0) ? "4" : "5"
+        bFinger = "4"
+      } else if (direction === -1) {
+        cFingr = (noteClass % 2 === 0) ? "2" : "3"
+        bFinger = "2"
+      } else {
+        // no direction : last note : relation to previous
+        if (prev) {
+          var interval = pitch - prev.pitch
+          if (interval > 0) {
+            cFinger = "5"
+            bFinger = "4"
+          } else {
+            cFinger = "2"
+            bFinger = "3"
+          }
+        } else {
+          cFinger = "1"
+          bFinger = "5"
+        }
+      }
+      return cFinger + "\n" + bFinger
+    }
+    // base logic : populate 
+    if (noteClass === 0) { // president rule 2@C
+      cFinger = "2" 
+      bFinger = "2"
+    } else if (noteClass === 2) { // D
+      cFinger = "3" 
+      bFinger = "4"
+    } else if (noteClass === 4) { // E
+      cFinger = "4"
+      bFinger = "3"
+    } else if (noteClass === 5) { // F
+      cFinger = "3"
+      bFinger = "4"
+    } else if (noteClass === 7) { // G
+      cFinger = "4"
+      bFinger = "3"
+    } else if (isChromatic) {
+      cFinger = (noteClass === 1 || noteClass === 2) ? "1" : "2"
+      // todo bFinger
+    } else if (direction === -1) { // closer-to higher
+      cFinger = "2"
+      bFinger = "2"
+    } else if (direction === 1) {
+      cFinger = "4"
+      bFinger = "4"
+    }
+    return cFinger + "\n" + bFinger
+  }
+
   function mapButtonToMidi(row, col) {
     var base = selectedLayout.start
     var off = selectedLayout.offset[col]
@@ -301,11 +505,11 @@ MuseScore {
   }
   function addChordText() {
     // console.log(qsTr("adding chord text to selected notes"))
-    var chord = foundChordLabel.text
-    if (!chord || 
-      chord === "none" || 
-      chord === "unknown" || 
-      chord.indexOf("select") !== -1) return
+    var chordFound = foundChordLabel.text
+    if (!chordFound || 
+      chordFound === "none" || 
+      chordFound === "unknown" || 
+      chordFound.indexOf("select") !== -1) return
     var selection = curScore.selection.elements
     if (selection.length === 0) {
       console.log("[addChordText] nothing selected : exiting ...")
@@ -327,42 +531,33 @@ MuseScore {
     console.log("[addChordText] firstNote.track=" + firstNote.track)
 
     curScore.startCmd()
+    var textObj = newElement(Element.STAFF_TEXT)
+    textObj.text = chordFound
     var cursor = curScore.newCursor()
-    cursor.track = showTreble ? 0 : 4  // point auto-assigned track
+    cursor.track = firstNote.track  // point auto-assigned track
     console.log("[addChordText] cursor.track=" + cursor.track)
-    cursor.rewind(Cursor.SELECTION_START)  // start of score
-    // cursor.track = firstNote.track // point specific staff & voice
-    // cursor.inputStateMode = Cursor.INPUT_STATE_SYNC_WITH_SCORE // get segment
-    // cursor.rewind(0)  // start of score
-    if (cursor.segmen && cursor.tick !== firstNote.parent.parent.tick) {
-      var segment = firstNote.parent.parent
-      if (segment) {
-        var text = newElement(Element.STAFF_TEXT)
-        text.text = chord
-        segment.add(text)
-        curScore.endCmd()
-        return
-      }
+    cursor.rewind(0) // (Cursor.SELECTION_START)  // start of score
+    var targetTick = firstNote.parent.parent.tick
+    // fast forward
+    while (cursor.segment && cursor.tick < targetTick) {
+      cursor.next()
     }
-    // var targetTick = firstNote.parent.parent.tick // segment
-    // while (cursor.segment && cursor.tick < targetTick) {
-    //   cursor.next()
-    // }
-    // inject
-    var text = newElement(Element.STAFF_TEXT)
-    text.text = chord
-    // add text directly to segment on specific track
-    if (cursor.segment) {
-      cursor.add(text)
+    // write to score
+    if (cursor.segment && cursor.tick === targetTick) {
+      cursor.add(textObj)
+    } else {
+      // fallback
+      if (firstNote.parent) {
+        firstNote.parent.add(textObj)
+      }
     }
     curScore.endCmd()
   }
   // funcions end
   Column { // has single column
     id: mainWidget
-    width: cbaplugin.width
-    // width: parent.width
-    height: cbaplugin.height
+    width: parent.width
+    height: parent.height
     anchors.fill: parent
     // color: "transparent"
     Row { // chord identifier
@@ -372,8 +567,8 @@ MuseScore {
       anchors.horizontalCenter: parent.horizontalCenter
       Button {
         text: qsTr("get chord")
-        ToolTip.text: qsTr("get chord from selected notes - min 3
-          \ncan be added to selected notes")
+        ToolTip.text: qsTr("get chord from selected notes - min 3" +
+          "\ncan be added to selected notes")
         ToolTip.visible: hovered
         ToolTip.delay: tooltipDelay 
         onClicked: getSelectedPitch()
@@ -417,7 +612,15 @@ MuseScore {
         anchors.fill: parent
         hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
-        onClicked: showButtonboard = !showButtonboard
+        onClicked: {
+          showButtonboard = !showButtonboard
+          // made mu3 collapse bottom panel
+          // var targetHeight = showButtonboard ? pluginHeight : 60
+          // cbaplugin.height = targetHeight
+          // if (Window.window) {
+          //   Window.window.height = targetHeight
+          // }
+        }
       }
     }
     // wrap row2 + row3 + row4 buttonboard into container
@@ -425,14 +628,12 @@ MuseScore {
       id:toggleButtonboard
       width: parent.width
       visible: showButtonboard
-      height: showButtonboard ? 725 : 0
-      // height: showButtonboard ? implicitHeight : 0
+      height: showButtonboard ? btnBoardHeight : 0
       spacing: showButtonboard ? 10 : 0
-      // spacing: mainWidget.spacing
       // row2 
       Row { // checkboxes
         id: row2
-        height: 30
+        height: 20
         anchors.horizontalCenter: parent.horizontalCenter
         spacing: 7
         // use melodic / free bass for chord presentation
@@ -441,7 +642,8 @@ MuseScore {
           text: qsTr("MB") // for majority langs this can stay MB ???
           checked: meloBassMode 
           onCheckedChanged: meloBassMode = checked
-          ToolTip.text: qsTr("present as melodic / free bass chord vs default stradella bass")
+          ToolTip.text: qsTr("present as melodic / free bass chord" +
+            "\nvs default stradella bass")
           ToolTip.visible: hovered
           ToolTip.delay: tooltipDelay 
           contentItem: Text {
@@ -466,7 +668,7 @@ MuseScore {
             verticalAlignment: Text.AlignVCenter
           }
         } 
-        // show fingering todo : should be button ???
+        // show fingering
         CheckBox {
           text: qsTr("fingering")
           ToolTip.text: qsTr("check or add fingering to treble part")
@@ -485,12 +687,12 @@ MuseScore {
       // row 3 
       Row { // layout selection
         id: row3
-        height: 40
+        height: 30
         spacing: 4
         anchors.horizontalCenter: parent.horizontalCenter
         ComboBox { // bass selector
           id: bassSelector
-          width:comboWidth 
+          width: comboWidth 
           ToolTip.text: qsTr("select bass layout")
           ToolTip.visible: hovered
           ToolTip.delay: tooltipDelay 
@@ -501,6 +703,7 @@ MuseScore {
         ComboBox { // 8ve selector
           id: octaveSelector
           width: 52
+          currentIndex: 2 // set default model choice
           ToolTip.text: qsTr("select bass 8ve\n24=5th | .. | 0=3rd | .. | -24=1st
             \nfor melodic / free bass only")
           ToolTip.visible: hovered
@@ -523,16 +726,11 @@ MuseScore {
         id: boardWidget
         width: parent.width
         spacing: 20
-        // color: "transparent" // rejected code
-        // todo height not set ???
         // treble board
-        // Rectangle {
         Item {
           id: trebleBrdItem
           width: parent.width
           height: trebleRow.height
-          // height: showTreble ? 725 : 0
-          // height: showTreble ? trebleRow.height : 0 // todo works properly
           visible: showTreble
           Row {
             id: trebleRow
@@ -550,7 +748,7 @@ MuseScore {
                     width:buttonSize 
                     height: buttonSize
                     radius: buttonSize / 2 
-                    // playback highlight
+                    // selection (playback) highlight
                     property bool isSelected: trebleActivePitches.indexOf(pitch) !== -1
                     // calculate pitch
                     property int pitch: mapButtonToMidi(index, colIndex)
@@ -574,12 +772,10 @@ MuseScore {
           }
         }
         // bass board
-        // Rectangle { // accidentals included
         Item { // accidentals included
           id: bassBrdItem
           width: parent.width
-          // height: !showTreble ? 725 : 0
-          height: !showTreble ? bassRow.height : 0 // todo works proper
+          height: !showTreble ? bassRow.height : 0 
           visible: !showTreble
           Row {
             id: bassRow
@@ -595,7 +791,7 @@ MuseScore {
                 spacing: bassBtnSpacing
                 topPadding: col * (bassBtnSize / 2)
                 Repeater {
-                  model: 12 // tones in 72 bass-button case
+                  model: 12 // tones in 72 bass-buttons accordion
                   delegate: Rectangle {
                     id: rowDelegate
                     property int row: index
@@ -646,21 +842,3 @@ MuseScore {
     }
   }
 }
-
-
-
-      // show treble (default) vs bass buttonboard
-      // CheckBox {
-      //   text: qsTr("treble")
-      //   ToolTip.text: qsTr("show treble (default) vs bass buttonboard")
-      //   ToolTip.visible: hovered
-      //   ToolTip.delay: tooltipDelay 
-      //   checked: showTreble
-      //   onCheckedChanged: showTreble = checked
-      //   contentItem: Text {
-      //     text: parent.text
-      //     color: "white"
-      //     leftPadding: textLeftPadding
-      //     verticalAlignment: Text.AlignVCenter
-      //   } 
-      // }
