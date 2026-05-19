@@ -9,7 +9,7 @@ MuseScore {
   version: "1.0"
   description: qsTr("chromatic button accordion visual helper")
   pluginType: "dialog"
-  title: qsTr("chromatic button accordion plugin")
+  title: qsTr("poland chroma-button-accordion")
   width: 300
   height: pluginHeight 
   onRun: {
@@ -18,13 +18,13 @@ MuseScore {
   property var lastClickTime: 0
   property var doubleClickSpeed: 700
   // toggle buttonboard visibility
-  property int pluginHeight: 816
+  property int pluginHeight: 850
   property bool showButtonboard: true 
   property int btnBoardHeight: 70
   property int comboWidth: 110
   // color configuration
   readonly property color highlight1b: "dodgerblue"
-  readonly property color highlight2g: "darkgreen" // "palegreen"
+  readonly property color highlight2g: "darkorange"
   // playback tracker
   property var trebleActivePitches: []
   property var bassActivePitches: []
@@ -33,8 +33,9 @@ MuseScore {
   property bool showButtonTones: true 
   property bool showFingering: false
   property bool showTreble: false
-  // bass range shift
-  property int bassOctaveShift: 0
+  // range shift
+  property int treble8veShift: 0
+  property int bass8veShift: 2
   // mysterious options
   property int rowLeftMargin: 7
   property int textLeftPadding: 19 
@@ -48,7 +49,7 @@ MuseScore {
   property var bassBtnSpacing: 3
   property var bassBtnFontSize: 34
   // buttonboard treble layouts
-  property var layouts: [ // name, lowest note, offset from lowest = start MIDI
+  property var trebleLayouts: [ // name, lowest note, offset from lowest = start MIDI
     { name: "C-griff Europe",start: 55, offset: [0, -1, 1, 0, 2] }, 
     { name: "C-griff 2", start: 56, offset: [3, 1, 2, 0, 1] },
     { name: "B-griff Bayan", start: 55, offset: [3, 1, 2, 0, 1] }, 
@@ -56,7 +57,7 @@ MuseScore {
     { name: "D-griff 1", start: 53, offset: [1, 0, 2, 1, 3] },
     { name: "D-griff 2", start: 55, offset: [2, 0, 1, -1, 0] }
   ]
-  property var selectedLayout: layouts[0]
+  property var selectedTrebleLayout: trebleLayouts[0]
   // buttonboard bass layouts
   property var bassLayouts: [ // name, lowest note, offset from lowest = start MIDI
     { name: "minor 3rds",start: 54, offset: [0, 1, 2, 3, 4], vStep: 3 }, // C-griff Europe mirror
@@ -111,8 +112,9 @@ MuseScore {
           var text = elements[i].parent
           if (track >= 0 && track < 4) { // track 0-3 = treble staff
             showTreble = true
-            if (tempTreble.indexOf(pitch) === -1) {
-              tempTreble.push(pitch)
+            var shiftedPitch = pitch - treble8veShift
+            if (tempTreble.indexOf(shiftedPitch) === -1) {
+              tempTreble.push(shiftedPitch)
             }
           } else if (track >= 4 && track < 8) { // bass staff
             showTreble = false
@@ -166,7 +168,7 @@ MuseScore {
       if (meloBassMode) { // match exact pitches across all board buttons
         for (var i = 0; i < bassPitches.length; i++) {
           // allow for shifting octaves, as 5 bass layouts span 5th > 2nd octave
-          var targetPitch = bassPitches[i] - bassOctaveShift
+          var targetPitch = bassPitches[i] - bass8veShift
           for (var r = 0; r < 12; r++) {
             for (var c = 0; c < 4; c++) {
               if (mapMelodicBass(r, c) === targetPitch) {
@@ -363,7 +365,7 @@ MuseScore {
   }
   
   function getFinger(pitch, direction, isChromatic, requestAlternate, prev, next) {
-    var noteClass = pitch % 12
+    var noteClass = pitch % 12 // todo more dynamic results we wanna
     var cFingr = "3"
     var bFinger = "3"
     // alternate logic : direction-based priority
@@ -422,8 +424,8 @@ MuseScore {
   }
 
   function mapButtonToMidi(row, col) {
-    var base = selectedLayout.start
-    var off = selectedLayout.offset[col]
+    var base = selectedTrebleLayout.start
+    var off = selectedTrebleLayout.offset[col]
     return (base + off) + (row * 3)
   }
   function mapMelodicBass(row, col) {
@@ -559,10 +561,9 @@ MuseScore {
     width: parent.width
     height: parent.height
     anchors.fill: parent
-    // color: "transparent"
     Row { // chord identifier
       id: row1
-      height: 30 // Hard fixed height todo dynamic height ???
+      height: 30
       spacing: 4
       anchors.horizontalCenter: parent.horizontalCenter
       Button {
@@ -597,7 +598,7 @@ MuseScore {
     Rectangle {
       id: handleBackground
       width: parent.width
-      height: 22  // also fixed height todo also dynamic height ???
+      height: 22 
       color: "#1b1b1b"
       Rectangle {
         id:toggleHandle
@@ -623,7 +624,7 @@ MuseScore {
         }
       }
     }
-    // wrap row2 + row3 + row4 buttonboard into container
+    // wrap row2 + row3 + row4 + buttonboard into container
     Column {
       id:toggleButtonboard
       width: parent.width
@@ -671,7 +672,8 @@ MuseScore {
         // show fingering
         CheckBox {
           text: qsTr("fingering")
-          ToolTip.text: qsTr("check or add fingering to treble part")
+          ToolTip.text: qsTr("add, change or hide fingering in treble part" +
+            "\ndouble-click to alternate fingering")
           ToolTip.visible: hovered
           ToolTip.delay: tooltipDelay 
           checked: showFingering
@@ -685,11 +687,64 @@ MuseScore {
         }
       }
       // row 3 
-      Row { // layout selection
+      Row { // treble layout selection
         id: row3
-        height: 30
-        spacing: 4
+        height: 25
+        spacing: 12
         anchors.horizontalCenter: parent.horizontalCenter
+        // Label {
+        //   id: trebleLayout
+        //   text: qsTr("treble layout")
+        //   width: 100
+        //   horizontalAlignment: Text.AlignRight
+        //   verticalAlignment: Text.AlignVCenter
+        //   font.pixelSize: 14
+        //   // minimumPixelSize: 10
+        //   color: highlight1b
+        //   leftPadding: 4
+        //   rightPadding: 10
+        //   // fontSizeMode: Text.Fit
+        // }
+        ComboBox { // treble selector
+          id: trebleSelector
+          width: comboWidth
+          ToolTip.text: qsTr("select treble layout")
+          ToolTip.visible: hovered
+          ToolTip.delay: tooltipDelay 
+          model: trebleLayouts
+          textRole: "name"
+          onActivated: function(index) { selectedTrebleLayout = trebleLayouts[index] }
+        }
+        ComboBox { // treble 8ve selector
+          id: treble8veSelector
+          width: 52
+          currentIndex: 0 // set default model choice
+          ToolTip.text: qsTr("select treble 8ve\n0=3rd | -12=2nd | -24=1st")
+          ToolTip.visible: hovered
+          ToolTip.delay: tooltipDelay 
+          model: [0, -12, -24]
+          onActivated: function(index) { treble8veShift = model[index] }
+        }
+      }
+      // row 4 
+      Row { // bass layout selection
+        id: row4
+        height: 30
+        spacing: 12
+        anchors.horizontalCenter: parent.horizontalCenter
+        // Label {
+        //   id: bassLayout
+        //   text: qsTr("bass layout")
+        //   width: 100
+        //   horizontalAlignment: Text.AlignRight
+        //   verticalAlignment: Text.AlignVCenter
+        //   font.pixelSize: 14
+        //   // minimumPixelSize: 10
+        //   color: highlight2g
+        //   leftPadding: 4
+        //   rightPadding: 10
+        //   // fontSizeMode: Text.Fit
+        // }
         ComboBox { // bass selector
           id: bassSelector
           width: comboWidth 
@@ -701,25 +756,15 @@ MuseScore {
           onActivated: function(index) { selectedBassLayout = bassLayouts[index] }
         }
         ComboBox { // 8ve selector
-          id: octaveSelector
+          id: bass8veSelector
           width: 52
           currentIndex: 2 // set default model choice
-          ToolTip.text: qsTr("select bass 8ve\n24=5th | .. | 0=3rd | .. | -24=1st
-            \nfor melodic / free bass only")
+          ToolTip.text: qsTr("select bass 8ve\n24=5th | .. | 0=3rd | .. | -24=1st" +
+            "\nfor melodic / free bass only")
           ToolTip.visible: hovered
           ToolTip.delay: tooltipDelay 
           model: [24, 12, 0, -12, -24]
           onActivated: function(index) { bassOctaveShift = model[index] }
-        }
-        ComboBox { // treble selector
-          id: trebleSelector
-          width: comboWidth
-          ToolTip.text: qsTr("select treble layout")
-          ToolTip.visible: hovered
-          ToolTip.delay: tooltipDelay 
-          model: layouts
-          textRole: "name"
-          onActivated: function(index) { bassOctaveShift = bassOctaveShift[index] }
         }
       }
       Column { // buttonboards
