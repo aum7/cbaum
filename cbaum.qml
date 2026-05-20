@@ -1,6 +1,6 @@
 // musescore 4.7 plugin - chromatic button accordion notes-to-buttons
 import MuseScore 3.0
-import QtQuick 
+import QtQuick
 import QtQuick.Controls 
 import QtQuick.Window
 
@@ -312,7 +312,6 @@ MuseScore {
       console.log("calcFinger : active selection has no proper start / end segments")
       return
     }
-    // console.log("calcFinger : inside ...")
     // wrap into commmand
     curScore.startCmd()
     var startTick = sel.startSegment.tick
