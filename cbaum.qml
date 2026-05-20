@@ -13,7 +13,7 @@ MuseScore {
   property var lastClickTime: 0
   property var doubleClickSpeed: 700
   // toggle buttonboard visibility
-  property bool showButtonboard: true 
+  property bool showButtonboard: false 
   property int btnBoardHeight: 70
   property int comboWidth: 110
   // color configuration
@@ -568,7 +568,7 @@ MuseScore {
     flags: Qt.Window | Qt.WindowMinimizeButtonHint | Qt.WindowCloseButtonHint |
       Qt.WindowStaysOnTopHint // | Qt.WindowTitleHint | Qt.WindowSystemMenuHint
     width: 300
-    height: windowHeight
+    height: showButtonboard ? windowHeight : collapsedHeight
     x: 0 // move to left edge
     y: 108 // move down from top
     visible: true
@@ -589,7 +589,9 @@ MuseScore {
           id: getChordBtn
           text: qsTr("get chord")
           ToolTip.text: qsTr("get chord from selected notes - min 3" +
-            "\ncan be added to selected notes")
+            "\ncan be added to selected notes" +
+            "\nnotes need be shift-selected, ie have square" +
+            "\nctrl-selected notes will not work")
           ToolTip.visible: hovered
           ToolTip.delay: tooltipDelay 
           onClicked: getSelectedPitch()
@@ -645,11 +647,10 @@ MuseScore {
       }
       // wrap row2 + row3 + row4 + buttonboard into container
       Column {
-        id:toggleButtonboard
+        id: buttonboard
         width: parent.width
         visible: showButtonboard
-        height: showButtonboard ? btnBoardHeight : 0
-        spacing: showButtonboard ? 10 : 0
+        spacing: 10
         // row2 
         Row { // checkboxes
           id: row2
