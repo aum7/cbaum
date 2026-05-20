@@ -1,21 +1,15 @@
 // musescore 4.7 plugin - chromatic button accordion notes-to-buttons
 import MuseScore 3.0
-import QtQuick
-import QtQuick.Controls 
-import QtQuick.Window
+import QtQuick 2.15
+import QtQuick.Controls 2.15
+import QtQuick.Window 2.2
 
 MuseScore {
   id: cbaplugin
   version: "1.0"
   description: qsTr("chromatic button accordion visual helper")
-  pluginType: "dialog"
-  title: qsTr("poland chroma-button-accordion")
-  width: 300
-  height: pluginHeight 
-  onRun: {
-    console.log("cba plugin started")
-  }
-  property int pluginHeight: 850
+  property int windowHeight: 850
+  property int collapsedHeight: 57
   property var lastClickTime: 0
   property var doubleClickSpeed: 700
   // toggle buttonboard visibility
@@ -23,6 +17,8 @@ MuseScore {
   property int btnBoardHeight: 70
   property int comboWidth: 110
   // color configuration
+  readonly property color darkTheme: "#1a1a1a"
+  readonly property color lightTheme: "white"
   readonly property color highlight1: "dodgerblue"
   readonly property color highlight2: "darkorange"
   // playback tracker
@@ -566,319 +562,333 @@ MuseScore {
     curScore.endCmd()
   }
   // funcions end
-  Column { // has single column
-    id: mainWidget
-    width: parent.width
-    height: parent.height
-    anchors.fill: parent
-    Row { // chord identifier
-      id: row1
-      height: 30
-      spacing: 4
-      anchors.horizontalCenter: parent.horizontalCenter
-      Button {
-        text: qsTr("get chord")
-        ToolTip.text: qsTr("get chord from selected notes - min 3" +
-          "\ncan be added to selected notes")
-        ToolTip.visible: hovered
-        ToolTip.delay: tooltipDelay 
-        onClicked: getSelectedPitch()
-      }
-      Label {
-        id: foundChordLabel
-        text: qsTr("none")
-        width: 114
-        horizontalAlignment: Text.AlignHCenter
-        verticalAlignment: Text.AlignVCenter
-        font.pixelSize: 18
-        minimumPixelSize: 10
-        color: "dodgerblue"
-        padding: 0
-        fontSizeMode: Text.Fit
-      }
-      Button {
-        text: qsTr("add as text")
-        ToolTip.text: qsTr("add identified chord to selected notes")
-        ToolTip.visible: hovered
-        ToolTip.delay: tooltipDelay 
-        onClicked: addChordText()
-      }
-    }
-    // toggle separator
-    Rectangle {
-      id: handleBackground
+  Window {
+    id: mainWindow
+    title: qsTr("poland chroma-button-accordion")
+    flags: Qt.Window | Qt.WindowMinimizeButtonHint | Qt.WindowCloseButtonHint |
+      Qt.WindowStaysOnTopHint // | Qt.WindowTitleHint | Qt.WindowSystemMenuHint
+    width: 300
+    height: windowHeight
+    x: 0 // move to left edge
+    y: 108 // move down from top
+    visible: true
+    color: darkTheme
+    
+    Column { // has single column
+      id: mainWidget
       width: parent.width
-      height: 22 
-      color: "#1b1b1b"
-      Rectangle {
-        id:toggleHandle
-        width: 64
-        height: 12
-        radius: 4
-        anchors.centerIn: parent
-        color: toggleBtnBrdMouseArea.containsMouse ? highlight1 : "#3c3c3c"
-      }
-      MouseArea {
-        id: toggleBtnBrdMouseArea
-        anchors.fill: parent
-        hoverEnabled: true
-        cursorShape: Qt.PointingHandCursor
-        onClicked: {
-          showButtonboard = !showButtonboard
-          // made mu3 collapse bottom panel
-          // var targetHeight = showButtonboard ? pluginHeight : 60
-          // cbaplugin.height = targetHeight
-          // if (Window.window) {
-          //   Window.window.height = targetHeight
-          // }
-        }
-      }
-    }
-    // wrap row2 + row3 + row4 + buttonboard into container
-    Column {
-      id:toggleButtonboard
-      width: parent.width
-      visible: showButtonboard
-      height: showButtonboard ? btnBoardHeight : 0
-      spacing: showButtonboard ? 10 : 0
-      // row2 
-      Row { // checkboxes
-        id: row2
-        height: 20
-        anchors.horizontalCenter: parent.horizontalCenter
-        spacing: 7
-        // use melodic / free bass for chord presentation
-        CheckBox {
-          id: meloBassCbx
-          text: qsTr("MB") // for majority langs this can stay MB ???
-          checked: meloBassMode 
-          onCheckedChanged: meloBassMode = checked
-          ToolTip.text: qsTr("present as melodic / free bass chord" +
-            "\nvs default stradella bass")
-          ToolTip.visible: hovered
-          ToolTip.delay: tooltipDelay 
-          contentItem: Text {
-            text: parent.text
-            color: "white"
-            leftPadding: textLeftPadding 
-            verticalAlignment: Text.AlignVCenter
-          }
-        }
-        // show tone names on buttons
-        CheckBox {
-          text: qsTr("tones")
-          ToolTip.text: qsTr("show tone names on buttons")
-          ToolTip.visible: hovered
-          ToolTip.delay: tooltipDelay 
-          checked: showButtonTones
-          onCheckedChanged: showButtonTones = checked
-          contentItem: Text {
-            text: parent.text
-            color: "white"
-            leftPadding: textLeftPadding
-            verticalAlignment: Text.AlignVCenter
-          }
-        } 
-        // show fingering
-        CheckBox {
-          id: fingerCbx
-          text: qsTr("fingering")
-          ToolTip.text: qsTr("add, change or hide fingering in treble part" +
-            "\ndouble-click to alternate fingering")
-          ToolTip.visible: hovered
-          ToolTip.delay: tooltipDelay 
-          checked: showFingering
-          onCheckedChanged: showFingering = checked
-          onClicked: {
-            var currentTime = new Date().getTime()
-            // detect double-click
-            if (currentTime - lastClickTime < doubleClickSpeed) {
-            console.log("onClicked : alternate fingering ...")
-            checked = true
-            calcFinger(true)
-            } else {
-              if (checked) {
-                console.log("onClicked : initial fingering ...")
-                calcFinger(false) // initial calculation
-              } else {
-                console.log("onClicked : hiding fingering ...")
-                hideFinger()
-              }
-            }
-            lastClickTime = currentTime
-          }
-          contentItem: Text {
-            text: parent.text
-            color: "white"
-            leftPadding: textLeftPadding
-            verticalAlignment: Text.AlignVCenter
-          } 
-        }
-      }
-      // row 3 
-      Row { // treble layout selection
-        id: row3
-        height: 25
-        spacing: 12
-        anchors.horizontalCenter: parent.horizontalCenter
-        ComboBox { // treble selector
-          id: trebleSelector
-          width: comboWidth
-          ToolTip.text: qsTr("select treble layout")
-          ToolTip.visible: hovered
-          ToolTip.delay: tooltipDelay 
-          model: trebleLayouts
-          textRole: "name"
-          onActivated: function(index) { selectedTrebleLayout = trebleLayouts[index] }
-        }
-        ComboBox { // treble 8ve selector
-          id: treble8veSelector
-          width: 52
-          currentIndex: 0 // set default model choice
-          ToolTip.text: qsTr("select treble 8ve\n0=3rd | -12=2nd | -24=1st")
-          ToolTip.visible: hovered
-          ToolTip.delay: tooltipDelay 
-          model: [0, -12, -24]
-          onActivated: function(index) { treble8veShift = model[index] }
-        }
-      }
-      // row 4 
-      Row { // bass layout selection
-        id: row4
+      height: parent.height
+      anchors.fill: parent
+      topPadding: 5
+      Row { // chord identifier
+        id: row1
         height: 30
-        spacing: 12
+        spacing: 4
         anchors.horizontalCenter: parent.horizontalCenter
-        ComboBox { // bass selector
-          id: bassSelector
-          width: comboWidth 
-          ToolTip.text: qsTr("select bass layout")
+        Button {
+          id: getChordBtn
+          text: qsTr("get chord")
+          ToolTip.text: qsTr("get chord from selected notes - min 3" +
+            "\ncan be added to selected notes")
           ToolTip.visible: hovered
           ToolTip.delay: tooltipDelay 
-          model: bassLayouts
-          textRole: "name"
-          onActivated: function(index) { selectedBassLayout = bassLayouts[index] }
+          onClicked: getSelectedPitch()
         }
-        ComboBox { // 8ve selector
-          id: bass8veSelector
-          width: 52
-          currentIndex: 2 // set default model choice
-          ToolTip.text: qsTr("select bass 8ve\n24=5th | .. | 0=3rd | .. | -24=1st" +
-            "\nfor melodic / free bass only")
+        Label {
+          id: foundChordLabel
+          text: qsTr("none")
+          width: 114
+          horizontalAlignment: Text.AlignHCenter
+          verticalAlignment: Text.AlignVCenter
+          font.pixelSize: 18
+          minimumPixelSize: 10
+          color: "dodgerblue"
+          padding: 0
+          fontSizeMode: Text.Fit
+        }
+        Button {
+          id: addAsTextBtn
+          text: qsTr("add as text")
+          ToolTip.text: qsTr("add identified chord to selected notes")
           ToolTip.visible: hovered
           ToolTip.delay: tooltipDelay 
-          model: [24, 12, 0, -12, -24]
-          onActivated: function(index) { bass8veShift = model[index] }
+          onClicked: addChordText()
         }
       }
-      Column { // buttonboards
-        id: boardWidget
+      // toggle separator
+      Rectangle {
+        id: handleBackground
         width: parent.width
-        spacing: 20
-        // treble board
-        Item {
-          id: trebleBrdItem
+        height: 22 
+        color: "#272727"
+        Rectangle {
+          id:toggleHandle
+          width: 64
+          height: 12
+          radius: 4
+          anchors.centerIn: parent
+          color: toggleBtnBrdMouseArea.containsMouse ? highlight1 : "#3c3c3c"
+        }
+        MouseArea {
+          id: toggleBtnBrdMouseArea
+          anchors.fill: parent
+          hoverEnabled: true
+          cursorShape: Qt.PointingHandCursor
+          onClicked: {
+            showButtonboard = !showButtonboard
+            // made mu3 collapse bottom panel
+            var targetHeight = showButtonboard ? windowHeight : collapsedHeight
+            cbaplugin.height = targetHeight
+            mainWindow.height = targetHeight
+          }
+        }
+      }
+      // wrap row2 + row3 + row4 + buttonboard into container
+      Column {
+        id:toggleButtonboard
+        width: parent.width
+        visible: showButtonboard
+        height: showButtonboard ? btnBoardHeight : 0
+        spacing: showButtonboard ? 10 : 0
+        // row2 
+        Row { // checkboxes
+          id: row2
+          height: 20
+          anchors.horizontalCenter: parent.horizontalCenter
+          spacing: 7
+          // use melodic / free bass for chord presentation
+          CheckBox {
+            id: meloBassCbx
+            text: qsTr("MB") // for majority langs this can stay MB ???
+            checked: meloBassMode 
+            onCheckedChanged: meloBassMode = checked
+            ToolTip.text: qsTr("present as melodic / free bass chord" +
+              "\nvs default stradella bass")
+            ToolTip.visible: hovered
+            ToolTip.delay: tooltipDelay 
+            contentItem: Text {
+              text: parent.text
+              color: "white"
+              leftPadding: textLeftPadding 
+              verticalAlignment: Text.AlignVCenter
+            }
+          }
+          // show tone names on buttons
+          CheckBox {
+            text: qsTr("tones")
+            ToolTip.text: qsTr("show tone names on buttons")
+            ToolTip.visible: hovered
+            ToolTip.delay: tooltipDelay 
+            checked: showButtonTones
+            onCheckedChanged: showButtonTones = checked
+            contentItem: Text {
+              text: parent.text
+              color: "white"
+              leftPadding: textLeftPadding
+              verticalAlignment: Text.AlignVCenter
+            }
+          } 
+          // show fingering
+          CheckBox {
+            id: fingerCbx
+            text: qsTr("fingering")
+            ToolTip.text: qsTr("add, change or hide fingering in treble part" +
+              "\ndouble-click to alternate fingering")
+            ToolTip.visible: hovered
+            ToolTip.delay: tooltipDelay 
+            checked: showFingering
+            onCheckedChanged: showFingering = checked
+            onClicked: {
+              var currentTime = new Date().getTime()
+              // detect double-click
+              if (currentTime - lastClickTime < doubleClickSpeed) {
+              console.log("onClicked : alternate fingering ...")
+              checked = true
+              calcFinger(true)
+              } else {
+                if (checked) {
+                  console.log("onClicked : initial fingering ...")
+                  calcFinger(false) // initial calculation
+                } else {
+                  console.log("onClicked : hiding fingering ...")
+                  hideFinger()
+                }
+              }
+              lastClickTime = currentTime
+            }
+            contentItem: Text {
+              text: parent.text
+              color: "white"
+              leftPadding: textLeftPadding
+              verticalAlignment: Text.AlignVCenter
+            } 
+          }
+        }
+        // row 3 
+        Row { // treble layout selection
+          id: row3
+          height: 25
+          spacing: 12
+          anchors.horizontalCenter: parent.horizontalCenter
+          ComboBox { // treble selector
+            id: trebleSelector
+            width: comboWidth
+            ToolTip.text: qsTr("select treble layout")
+            ToolTip.visible: hovered
+            ToolTip.delay: tooltipDelay 
+            model: trebleLayouts
+            textRole: "name"
+            onActivated: function(index) { selectedTrebleLayout = trebleLayouts[index] }
+          }
+          ComboBox { // treble 8ve selector
+            id: treble8veSelector
+            width: 52
+            currentIndex: 0 // set default model choice
+            ToolTip.text: qsTr("select treble 8ve\n0=3rd | -12=2nd | -24=1st")
+            ToolTip.visible: hovered
+            ToolTip.delay: tooltipDelay 
+            model: [0, -12, -24]
+            onActivated: function(index) { treble8veShift = model[index] }
+          }
+        }
+        // row 4 
+        Row { // bass layout selection
+          id: row4
+          height: 30
+          spacing: 12
+          anchors.horizontalCenter: parent.horizontalCenter
+          ComboBox { // bass selector
+            id: bassSelector
+            width: comboWidth 
+            ToolTip.text: qsTr("select bass layout")
+            ToolTip.visible: hovered
+            ToolTip.delay: tooltipDelay 
+            model: bassLayouts
+            textRole: "name"
+            onActivated: function(index) { selectedBassLayout = bassLayouts[index] }
+          }
+          ComboBox { // 8ve selector
+            id: bass8veSelector
+            width: 52
+            currentIndex: 2 // set default model choice
+            ToolTip.text: qsTr("select bass 8ve\n24=5th | .. | 0=3rd | .. | -24=1st" +
+              "\nfor melodic / free bass only")
+            ToolTip.visible: hovered
+            ToolTip.delay: tooltipDelay 
+            model: [24, 12, 0, -12, -24]
+            onActivated: function(index) { bass8veShift = model[index] }
+          }
+        }
+        Column { // buttonboards
+          id: boardWidget
           width: parent.width
-          height: trebleRow.height
-          visible: showTreble
-          Row {
-            id: trebleRow
-            anchors.horizontalCenter: parent.horizontalCenter
-            spacing: buttonSpacing // 6 // creates vertical overlap for honeycomb
-            Repeater {
-              model: 5 // 5 rows of cba
-              delegate: Column {
-                property int colIndex: index
-                spacing: buttonSpacing // 8  // vertical spacing between buttons
-                topPadding: (colIndex % 2 === 0) ? 15 : 0 // half button offset
-                Repeater {
-                  model: (colIndex % 2 === 0) ? 16 : 17 
-                  delegate: Rectangle {
-                    width:buttonSize 
-                    height: buttonSize
-                    radius: buttonSize / 2 
-                    // selection (playback) highlight
-                    property bool isSelected: trebleActivePitches.indexOf(pitch) !== -1
-                    // calculate pitch
-                    property int pitch: mapButtonToMidi(index, colIndex)
-                    // determine button color
-                    property bool black: isBlackButton(pitch)
-                    color: isSelected ? highlight1 :
-                    (black ? "#333333" : "#eeeeee")
-                    border.color: "#777777"
-                    border.width: 1
-                    Text {
-                      anchors.centerIn: parent
-                      text: !black ? getNoteName(pitch) : ""
-                      visible: !black && showButtonTones // only show naturals
-                      font.pixelSize: buttonFontSize
-                      color: (black || isSelected) ? "white" : "black"
+          spacing: 20
+          // treble board
+          Item {
+            id: trebleBrdItem
+            width: parent.width
+            height: trebleRow.height
+            visible: showTreble
+            Row {
+              id: trebleRow
+              anchors.horizontalCenter: parent.horizontalCenter
+              spacing: buttonSpacing // 6 // creates vertical overlap for honeycomb
+              Repeater {
+                model: 5 // 5 rows of cba
+                delegate: Column {
+                  property int colIndex: index
+                  spacing: buttonSpacing // 8  // vertical spacing between buttons
+                  topPadding: (colIndex % 2 === 0) ? 15 : 0 // half button offset
+                  Repeater {
+                    model: (colIndex % 2 === 0) ? 16 : 17 
+                    delegate: Rectangle {
+                      width:buttonSize 
+                      height: buttonSize
+                      radius: buttonSize / 2 
+                      // selection (playback) highlight
+                      property bool isSelected: trebleActivePitches.indexOf(pitch) !== -1
+                      // calculate pitch
+                      property int pitch: mapButtonToMidi(index, colIndex)
+                      // determine button color
+                      property bool black: isBlackButton(pitch)
+                      color: isSelected ? highlight1 :
+                      (black ? "#333333" : "#eeeeee")
+                      border.color: "#777777"
+                      border.width: 1
+                      Text {
+                        anchors.centerIn: parent
+                        text: !black ? getNoteName(pitch) : ""
+                        visible: !black && showButtonTones // only show naturals
+                        font.pixelSize: buttonFontSize
+                        color: (black || isSelected) ? "white" : "black"
+                      }
                     }
                   }
                 }
               }
             }
           }
-        }
-        // bass board
-        Item { // accidentals included
-          id: bassBrdItem
-          width: parent.width
-          height: !showTreble ? bassRow.height : 0 
-          visible: !showTreble
-          Row {
-            id: bassRow
-            anchors.horizontalCenter: parent.horizontalCenter
-            anchors.top: parent.top
-            spacing: bassBtnSpacing
-            layoutDirection: Qt.LeftToRight
-            Repeater {
-              model: ["o", "7", "m", "M", "fb", "cb"]
-              delegate: Column {
-                id: columnDelegate
-                property int col: index
-                spacing: bassBtnSpacing
-                topPadding: col * (bassBtnSize / 2)
-                Repeater {
-                  model: 12 // tones in 72 bass-buttons accordion
-                  delegate: Rectangle {
-                    id: rowDelegate
-                    property int row: index
-                    width: bassBtnSize
-                    height: bassBtnSize
-                    radius: bassBtnSize / 2
-                    // highlight when selected by user
-                    property bool isSelected: { 
-                      var coordStr = row + "," + columnDelegate.col
-                      return bassActivePitches.indexOf(coordStr) !== -1
-                      }
-                    // converter logic
-                    property int pitch: mapMelodicBass(row, columnDelegate.col)
-                    property bool black: isBlackButton(pitch)
-                    color: isSelected ? highlight2 : (black ? "#333333" : "#eeeeee")
-                    border.color: "#777777"
-                    Text {
-                      text: {
-                        if (columnDelegate.col === 4 || columnDelegate.col === 5) {
+          // bass board
+          Item { // accidentals included
+            id: bassBrdItem
+            width: parent.width
+            height: !showTreble ? bassRow.height : 0 
+            visible: !showTreble
+            Row {
+              id: bassRow
+              anchors.horizontalCenter: parent.horizontalCenter
+              anchors.top: parent.top
+              spacing: bassBtnSpacing
+              layoutDirection: Qt.LeftToRight
+              Repeater {
+                model: ["o", "7", "m", "M", "fb", "cb"]
+                delegate: Column {
+                  id: columnDelegate
+                  property int col: index
+                  spacing: bassBtnSpacing
+                  topPadding: col * (bassBtnSize / 2)
+                  Repeater {
+                    model: 12 // tones in 72 bass-buttons accordion
+                    delegate: Rectangle {
+                      id: rowDelegate
+                      property int row: index
+                      width: bassBtnSize
+                      height: bassBtnSize
+                      radius: bassBtnSize / 2
+                      // highlight when selected by user
+                      property bool isSelected: { 
+                        var coordStr = row + "," + columnDelegate.col
+                        return bassActivePitches.indexOf(coordStr) !== -1
+                        }
+                      // converter logic
+                      property int pitch: mapMelodicBass(row, columnDelegate.col)
+                      property bool black: isBlackButton(pitch)
+                      color: isSelected ? highlight2 : (black ? "#333333" : "#eeeeee")
+                      border.color: "#777777"
+                      Text {
+                        text: {
+                          if (columnDelegate.col === 4 || columnDelegate.col === 5) {
+                            return getNoteName(pitch)
+                          }
+                          if (!meloBassMode) {
+                            if (rowDelegate.row === 0 || 
+                              rowDelegate.row === 6 || 
+                              rowDelegate.row === 11) {
+                              var chordLabels = ["o", "7", "m", "M"]
+                              return chordLabels[columnDelegate.col]
+                            }
+                            return ""
+                          }
+                          // fallback for melodic bass mode
                           return getNoteName(pitch)
                         }
-                        if (!meloBassMode) {
-                          if (rowDelegate.row === 0 || 
-                            rowDelegate.row === 6 || 
-                            rowDelegate.row === 11) {
-                            var chordLabels = ["o", "7", "m", "M"]
-                            return chordLabels[columnDelegate.col]
-                          }
-                          return ""
-                        }
-                        // fallback for melodic bass mode
-                        return getNoteName(pitch)
+                        font.pixelSize: text.length > 1 ? 
+                          bassBtnFontSize * 0.68 : 
+                          bassBtnFontSize
+                        color: (black || isSelected) ? "white" : "black"
+                        visible: showButtonTones
+                        anchors.centerIn: parent
                       }
-                      font.pixelSize: text.length > 1 ? 
-                        bassBtnFontSize * 0.68 : 
-                        bassBtnFontSize
-                      color: (black || isSelected) ? "white" : "black"
-                      visible: showButtonTones
-                      anchors.centerIn: parent
                     }
                   }
                 }
@@ -888,5 +898,9 @@ MuseScore {
         }
       }
     }
+  }
+  onRun: {
+    console.log("cba plugin started")
+    mainWindow.showNormal()
   }
 }
