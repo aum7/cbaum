@@ -1,4 +1,10 @@
 // musescore 4.7 plugin - chromatic button accordion notes-to-buttons
+// based on roland fr 1 xb button v-accordion : can be used for any other
+// accordion with similar treble & bass layout
+// layouts are from player perspective
+// implemented :
+//    chord identifier (fixed part) &
+//    visual notes-to-buttons presentation (collpsible)
 import MuseScore 3.0
 import QtQuick 2.15
 import QtQuick.Controls 2.15
@@ -7,7 +13,7 @@ import QtQuick.Window 2.2
 MuseScore {
   id: cbaplugin
   version: "1.0"
-  description: qsTr("chromatic button accordion visual helper")
+  description: qsTr("chromatic button accordion visual helper with chord identifier")
   property int windowHeight: 850
   property int collapsedHeight: 57
   property var lastClickTime: 0
@@ -564,7 +570,7 @@ MuseScore {
   // funcions end
   Window {
     id: mainWindow
-    title: qsTr("poland chroma-button-accordion")
+    title: qsTr("poland chroma-button-accordion      ")
     flags: Qt.Window | Qt.WindowMinimizeButtonHint | Qt.WindowCloseButtonHint |
       Qt.WindowStaysOnTopHint // | Qt.WindowTitleHint | Qt.WindowSystemMenuHint
     width: 300
