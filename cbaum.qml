@@ -15,16 +15,16 @@ MuseScore {
   onRun: {
     console.log("cba plugin started")
   }
+  property int pluginHeight: 850
   property var lastClickTime: 0
   property var doubleClickSpeed: 700
   // toggle buttonboard visibility
-  property int pluginHeight: 850
   property bool showButtonboard: true 
   property int btnBoardHeight: 70
   property int comboWidth: 110
   // color configuration
-  readonly property color highlight1b: "dodgerblue"
-  readonly property color highlight2g: "darkorange"
+  readonly property color highlight1: "dodgerblue"
+  readonly property color highlight2: "darkorange"
   // playback tracker
   property var trebleActivePitches: []
   property var bassActivePitches: []
@@ -276,7 +276,10 @@ MuseScore {
   }
   // fingering text
   function hideFinger() {
-    if (!curScore || curScore.selection.elements.length === 0) return
+    if (!curScore || curScore.selection.elements.length === 0) {
+      console.log("hideFinger : no score or nothing selected : exiting ...")
+      return
+    }
     // start command
     curScore.startCmd()
     // cursor for navigation of score
@@ -300,19 +303,25 @@ MuseScore {
   }
 
   function calcFinger(requestAlternate) {
-    if (!curScore || curScore.selection.elements.length === 0) return
+    if (!curScore || curScore.selection.elements.length === 0) {
+      console.log("calcFinger : no score or nothing selected : exiting ...")
+      return
+    }
     var sel = curScore.selection
     if (!sel.startSegment || !sel.endSegment) {
       console.log("calcFinger : active selection has no proper start / end segments")
       return
     }
+    // console.log("calcFinger : inside ...")
     // wrap into commmand
     curScore.startCmd()
     var startTick = sel.startSegment.tick
     var endTick = sel.endSegment.tick
     // gather melody data
     var notesSequence = []
+    // console.log("calcFinger : notesSequence=", notesSequence)
     var cursor = curScore.newCursor()
+    // cursor.track = sel.elements[0].track
     cursor.rewind(Cursor.SELECTION_START)
     while (cursor.segment && cursor.tick < endTick) {
       if (cursor.tick >= startTick &&
@@ -347,6 +356,7 @@ MuseScore {
         Math.abs(next.pitch - current.pitch) == 1)
       // internal logic engines
       var existing = getExistingFinger(note)
+      // console.log("calcFinger : existing=", existing)
       if (existing) {
         existing.visible = true
         if (requestAlternate) {
@@ -355,6 +365,7 @@ MuseScore {
         }
       } else {
         var fingerText = newElement(Element.FINGERING)
+        // fingerText.track = note.track
         fingerText.text = getFinger(current.pitch, direction, isChromatic,
           requestAlternate, prev, next)
         fingerText.placement = Placement.ABOVE  
@@ -366,7 +377,7 @@ MuseScore {
   
   function getFinger(pitch, direction, isChromatic, requestAlternate, prev, next) {
     var noteClass = pitch % 12 // todo more dynamic results we wanna
-    var cFingr = "3"
+    var cFinger = "3"
     var bFinger = "3"
     // alternate logic : direction-based priority
     if (requestAlternate) {
@@ -374,7 +385,7 @@ MuseScore {
         cFinger = (noteClass % 2 === 0) ? "4" : "5"
         bFinger = "4"
       } else if (direction === -1) {
-        cFingr = (noteClass % 2 === 0) ? "2" : "3"
+        cFinger = (noteClass % 2 === 0) ? "2" : "3"
         bFinger = "2"
       } else {
         // no direction : last note : relation to previous
@@ -606,7 +617,7 @@ MuseScore {
         height: 12
         radius: 4
         anchors.centerIn: parent
-        color: toggleBtnBrdMouseArea.containsMouse ? highlight1b : "#3c3c3c"
+        color: toggleBtnBrdMouseArea.containsMouse ? highlight1 : "#3c3c3c"
       }
       MouseArea {
         id: toggleBtnBrdMouseArea
@@ -671,6 +682,7 @@ MuseScore {
         } 
         // show fingering
         CheckBox {
+          id: fingerCbx
           text: qsTr("fingering")
           ToolTip.text: qsTr("add, change or hide fingering in treble part" +
             "\ndouble-click to alternate fingering")
@@ -678,6 +690,24 @@ MuseScore {
           ToolTip.delay: tooltipDelay 
           checked: showFingering
           onCheckedChanged: showFingering = checked
+          onClicked: {
+            var currentTime = new Date().getTime()
+            // detect double-click
+            if (currentTime - lastClickTime < doubleClickSpeed) {
+            console.log("onClicked : alternate fingering ...")
+            checked = true
+            calcFinger(true)
+            } else {
+              if (checked) {
+                console.log("onClicked : initial fingering ...")
+                calcFinger(false) // initial calculation
+              } else {
+                console.log("onClicked : hiding fingering ...")
+                hideFinger()
+              }
+            }
+            lastClickTime = currentTime
+          }
           contentItem: Text {
             text: parent.text
             color: "white"
@@ -692,19 +722,6 @@ MuseScore {
         height: 25
         spacing: 12
         anchors.horizontalCenter: parent.horizontalCenter
-        // Label {
-        //   id: trebleLayout
-        //   text: qsTr("treble layout")
-        //   width: 100
-        //   horizontalAlignment: Text.AlignRight
-        //   verticalAlignment: Text.AlignVCenter
-        //   font.pixelSize: 14
-        //   // minimumPixelSize: 10
-        //   color: highlight1b
-        //   leftPadding: 4
-        //   rightPadding: 10
-        //   // fontSizeMode: Text.Fit
-        // }
         ComboBox { // treble selector
           id: trebleSelector
           width: comboWidth
@@ -732,19 +749,6 @@ MuseScore {
         height: 30
         spacing: 12
         anchors.horizontalCenter: parent.horizontalCenter
-        // Label {
-        //   id: bassLayout
-        //   text: qsTr("bass layout")
-        //   width: 100
-        //   horizontalAlignment: Text.AlignRight
-        //   verticalAlignment: Text.AlignVCenter
-        //   font.pixelSize: 14
-        //   // minimumPixelSize: 10
-        //   color: highlight2g
-        //   leftPadding: 4
-        //   rightPadding: 10
-        //   // fontSizeMode: Text.Fit
-        // }
         ComboBox { // bass selector
           id: bassSelector
           width: comboWidth 
@@ -799,7 +803,7 @@ MuseScore {
                     property int pitch: mapButtonToMidi(index, colIndex)
                     // determine button color
                     property bool black: isBlackButton(pitch)
-                    color: isSelected ? highlight1b :
+                    color: isSelected ? highlight1 :
                     (black ? "#333333" : "#eeeeee")
                     border.color: "#777777"
                     border.width: 1
@@ -851,7 +855,7 @@ MuseScore {
                     // converter logic
                     property int pitch: mapMelodicBass(row, columnDelegate.col)
                     property bool black: isBlackButton(pitch)
-                    color: isSelected ? highlight2g : (black ? "#333333" : "#eeeeee")
+                    color: isSelected ? highlight2 : (black ? "#333333" : "#eeeeee")
                     border.color: "#777777"
                     Text {
                       text: {
