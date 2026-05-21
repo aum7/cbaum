@@ -22,7 +22,7 @@ MuseScore {
   //   var lang = localeName.split("_")[0]
   //   console.log("cbaplugin : host language detected=", lang)
   //   }
-  property int windowHeight: 850
+  property int expandedHeight: 850
   property int collapsedHeight: 57
   property var lastClickTime: 0
   property var doubleClickSpeed: 700
@@ -571,14 +571,14 @@ MuseScore {
     }
     curScore.endCmd()
   }
-  // funcions end
+  // functions end
   Window {
     id: mainWindow
     title: qsTr("poland chroma-button-accordion      ")
     flags: Qt.Window | Qt.WindowMinimizeButtonHint | Qt.WindowCloseButtonHint |
       Qt.WindowStaysOnTopHint // | Qt.WindowTitleHint | Qt.WindowSystemMenuHint
     width: 300
-    height: showButtonboard ? windowHeight : collapsedHeight
+    height: showButtonboard ? expandedHeight : collapsedHeight
     x: 970 // move from left edge
     y: 0 // move down from top
     visible: true
@@ -596,17 +596,9 @@ MuseScore {
         spacing: 4
         // width: parent.width
         anchors.horizontalCenter: parent.horizontalCenter
-        Button {
-          id: addAsTextBtn
-          text: qsTr("add as text")
-          ToolTip.text: qsTr("add identified chord to selected notes")
-          ToolTip.visible: showTooltips && hovered
-          ToolTip.delay: tooltipDelay 
-          onClicked: addChordText()
-        }
         Label {
           id: foundChordLabel
-          width: 194
+          width: 180 
           text: qsTr("none")
           horizontalAlignment: Text.AlignHCenter
           verticalAlignment: Text.AlignVCenter
@@ -628,6 +620,38 @@ MuseScore {
             hoverEnabled: true
             acceptedButtons: Qt.NoButton // allow click pass through
           }
+        }
+        Button {
+          id: togglePositionBtn
+          width:24 
+          text: qsTr("<>")
+          ToolTip.text: qsTr("toggle plugin position")
+          ToolTip.visible: showTooltips && hovered
+          ToolTip.delay: tooltipDelay 
+          // fontSizeMode: Text.fit
+          onClicked: {
+            if (mainWindow.x === 0) {
+              // move to screen top & collapse
+              mainWindow.x = 970
+              mainWindow.y = 0
+              showButtonboard = false
+              mainWindow.height = collapsedHeight 
+            } else {
+              // move over left panel & expand
+              mainWindow.x = 0
+              mainWindow.y = 70
+              showButtonboard = true
+              mainWindow.height = expandedHeight
+            }
+          }
+        }
+        Button {
+          id: addAsTextBtn
+          text: qsTr("add as text")
+          ToolTip.text: qsTr("add identified chord to selected notes")
+          ToolTip.visible: showTooltips && hovered
+          ToolTip.delay: tooltipDelay 
+          onClicked: addChordText()
         }
       }
       // toggle separator
@@ -652,7 +676,7 @@ MuseScore {
           onClicked: {
             showButtonboard = !showButtonboard
             // made mu3 collapse bottom panel
-            var targetHeight = showButtonboard ? windowHeight : collapsedHeight
+            var targetHeight = showButtonboard ? expandedHeight : collapsedHeight
             cbaplugin.height = targetHeight
             mainWindow.height = targetHeight
           }
