@@ -10,8 +10,8 @@ import MuseScore 3.0
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Window 2.2
-import QtQuick.VectorImage
-import "translations/translations.js" as I18n
+// import QtQuick.VectorImage
+// import "translations/translations.js" as I18n
 
 MuseScore {
   id: cbaplugin
@@ -26,6 +26,7 @@ MuseScore {
   property int collapsedHeight: 57
   property var lastClickTime: 0
   property var doubleClickSpeed: 700
+  property var showTooltips: false
   // toggle buttonboard visibility
   property bool showButtonboard: false 
   property int btnBoardHeight: 70
@@ -584,8 +585,8 @@ MuseScore {
       Qt.WindowStaysOnTopHint // | Qt.WindowTitleHint | Qt.WindowSystemMenuHint
     width: 300
     height: showButtonboard ? windowHeight : collapsedHeight
-    x: 0 // move to left edge
-    y: 108 // move down from top
+    x: 970 // move from left edge
+    y: 0 // move down from top
     visible: true
     color: darkTheme
     
@@ -608,7 +609,7 @@ MuseScore {
             "\ncan be added to selected notes" +
             "\nnotes need be shift-selected, ie have square" +
             "\nctrl-selected notes will not work")
-          ToolTip.visible: hovered
+          ToolTip.visible: showTooltips && hovered
           ToolTip.delay: tooltipDelay 
           onClicked: getSelectedPitch()
         }
@@ -628,7 +629,7 @@ MuseScore {
           id: addAsTextBtn
           text: qsTr("add as text")
           ToolTip.text: qsTr("add identified chord to selected notes")
-          ToolTip.visible: hovered
+          ToolTip.visible: showTooltips && hovered
           ToolTip.delay: tooltipDelay 
           onClicked: addChordText()
         }
@@ -681,7 +682,7 @@ MuseScore {
             onCheckedChanged: meloBassMode = checked
             ToolTip.text: qsTr("present as melodic / free bass chord" +
               "\nvs default stradella bass")
-            ToolTip.visible: hovered
+            ToolTip.visible: showTooltips && hovered
             ToolTip.delay: tooltipDelay 
             contentItem: Text {
               text: parent.text
@@ -694,7 +695,7 @@ MuseScore {
           CheckBox {
             text: qsTr("tones")
             ToolTip.text: qsTr("show tone names on buttons")
-            ToolTip.visible: hovered
+            ToolTip.visible: showTooltips && hovered
             ToolTip.delay: tooltipDelay 
             checked: showButtonTones
             onCheckedChanged: showButtonTones = checked
@@ -711,7 +712,7 @@ MuseScore {
             text: qsTr("fingering")
             ToolTip.text: qsTr("add, change or hide fingering in treble part" +
               "\ndouble-click to alternate fingering")
-            ToolTip.visible: hovered
+            ToolTip.visible: showTooltips && hovered
             ToolTip.delay: tooltipDelay 
             checked: showFingering
             onCheckedChanged: showFingering = checked
@@ -740,6 +741,21 @@ MuseScore {
               verticalAlignment: Text.AlignVCenter
             } 
           }
+          // toggle tooltip visibility
+          CheckBox {
+            text: qsTr("TT")
+            ToolTip.text: qsTr("toggle tooltips visibility")
+            ToolTip.visible: showTooltips && hovered
+            ToolTip.delay: tooltipDelay 
+            checked:showTooltips 
+            onCheckedChanged: showTooltips = checked
+            contentItem: Text {
+              text: parent.text
+              color: "white"
+              leftPadding: textLeftPadding
+              verticalAlignment: Text.AlignVCenter
+            }
+          } 
         }
         // row 3 
         Row { // treble layout selection
@@ -751,7 +767,7 @@ MuseScore {
             id: trebleSelector
             width: comboWidth
             ToolTip.text: qsTr("select treble layout")
-            ToolTip.visible: hovered
+            ToolTip.visible: showTooltips && hovered
             ToolTip.delay: tooltipDelay 
             model: trebleLayouts
             textRole: "name"
@@ -762,7 +778,7 @@ MuseScore {
             width: 52
             currentIndex: 0 // set default model choice
             ToolTip.text: qsTr("select treble 8ve\n0=3rd | -12=2nd | -24=1st")
-            ToolTip.visible: hovered
+            ToolTip.visible: showTooltips && hovered
             ToolTip.delay: tooltipDelay 
             model: [0, -12, -24]
             onActivated: function(index) { treble8veShift = model[index] }
@@ -778,7 +794,7 @@ MuseScore {
             id: bassSelector
             width: comboWidth 
             ToolTip.text: qsTr("select bass layout")
-            ToolTip.visible: hovered
+            ToolTip.visible: showTooltips && hovered
             ToolTip.delay: tooltipDelay 
             model: bassLayouts
             textRole: "name"
@@ -790,7 +806,7 @@ MuseScore {
             currentIndex: 2 // set default model choice
             ToolTip.text: qsTr("select bass 8ve\n24=5th | .. | 0=3rd | .. | -24=1st" +
               "\nfor melodic / free bass only")
-            ToolTip.visible: hovered
+            ToolTip.visible: showTooltips && hovered
             ToolTip.delay: tooltipDelay 
             model: [24, 12, 0, -12, -24]
             onActivated: function(index) { bass8veShift = model[index] }
