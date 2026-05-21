@@ -3,7 +3,7 @@
 // accordion with similar treble & bass layout
 // layouts are from player perspective
 // implemented :
-//    chord identifier (fixed part) &
+//    automatic chord identifier (fixed part) &
 //    visual notes-to-buttons presentation (collapsible)
 //    automatic selection of treble or bass
 import MuseScore 3.0
@@ -171,6 +171,17 @@ MuseScore {
           }
         }
       }
+      // automatic chord identification
+      var activeStaffPitches = showTreble ? tempTreble : bassPitches
+      if (activeStaffPitches.length === 0) {
+        foundChordLabel.text = qsTr("none")
+      } else if (activeStaffPitches.length < 3) {
+        foundChordLabel.text = qsTr("select 3+ notes")
+      } else {
+        // make sorted copy
+        var sortedPitches = activeStaffPitches.slice().sort(function(a, b) { return a - b })
+        foundChordLabel.text = identifyChord(sortedPitches)
+      }
       if (foundChordTonality !== "") {
         console.log("tonality=", foundChordTonality)
         lastTonality = foundChordTonality
@@ -285,7 +296,7 @@ MuseScore {
     trebleActivePitches = tempTreble
     bassActivePitches = tempBass
     }
-  }
+  } // timer end
   // fingering text
   function hideFinger() {
     if (!curScore || curScore.selection.elements.length === 0) {
@@ -509,24 +520,7 @@ MuseScore {
     }
     return qsTr("unknown")
   }
-  function getSelectedPitch() {
-    // selected note in ms score opened : runs on get chord button click
-    if (!curScore) {
-      console.log(qsTr("no score opened"))
-      return
-    }
-    var elements = curScore.selection.elements
-    var pitches = []
-    for (var i = 0; i < elements.length; i++) {
-      if (elements[i].type === Element.NOTE) pitches.push(elements[i].pitch)
-    }
-    if (pitches.length < 3) {
-      foundChordLabel.text = qsTr("select 3+ notes")
-      return
-    }
-    pitches.sort(function(a, b) { return a - b })
-    foundChordLabel.text = identifyChord(pitches) 
-  }
+
   function addChordText() {
     // console.log(qsTr("adding chord text to selected notes"))
     var chordFound = foundChordLabel.text
@@ -600,31 +594,8 @@ MuseScore {
         id: row1
         height: 30
         spacing: 4
+        // width: parent.width
         anchors.horizontalCenter: parent.horizontalCenter
-        Button {
-          id: getChordBtn
-          //: get musical chord - harmonic notes
-          text: qsTr("get chord")
-          ToolTip.text: qsTr("get chord from selected notes - min 3" +
-            "\ncan be added to selected notes" +
-            "\nnotes need be shift-selected, ie have square" +
-            "\nctrl-selected notes will not work")
-          ToolTip.visible: showTooltips && hovered
-          ToolTip.delay: tooltipDelay 
-          onClicked: getSelectedPitch()
-        }
-        Label {
-          id: foundChordLabel
-          text: qsTr("none")
-          width: 114
-          horizontalAlignment: Text.AlignHCenter
-          verticalAlignment: Text.AlignVCenter
-          font.pixelSize: 18
-          minimumPixelSize: 10
-          color: "dodgerblue"
-          padding: 0
-          fontSizeMode: Text.Fit
-        }
         Button {
           id: addAsTextBtn
           text: qsTr("add as text")
@@ -632,6 +603,31 @@ MuseScore {
           ToolTip.visible: showTooltips && hovered
           ToolTip.delay: tooltipDelay 
           onClicked: addChordText()
+        }
+        Label {
+          id: foundChordLabel
+          width: 194
+          text: qsTr("none")
+          horizontalAlignment: Text.AlignHCenter
+          verticalAlignment: Text.AlignVCenter
+          font.pixelSize: 18
+          minimumPixelSize: 10
+          color: "dodgerblue"
+          padding: 0
+          fontSizeMode: Text.Fit
+          ToolTip.text: qsTr("identify chord from selected notes - min 3" +
+            "\nnotes need be shift-selected, ie with top note" +
+            "\nof chord selected > shift+down arrow will" +
+            "\nsquare-select all chord notes" +
+            "\ncan be added to selected notes")
+          ToolTip.visible: showTooltips &&chordLabelMArea.containsMouse 
+          ToolTip.delay: tooltipDelay 
+          MouseArea {
+            id: chordLabelMArea
+            anchors.fill: parent
+            hoverEnabled: true
+            acceptedButtons: Qt.NoButton // allow click pass through
+          }
         }
       }
       // toggle separator
@@ -711,6 +707,7 @@ MuseScore {
             id: fingerCbx
             text: qsTr("fingering")
             ToolTip.text: qsTr("add, change or hide fingering in treble part" +
+              "\nselect whole measures" +
               "\ndouble-click to alternate fingering")
             ToolTip.visible: showTooltips && hovered
             ToolTip.delay: tooltipDelay 
