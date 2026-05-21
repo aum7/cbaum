@@ -1,3 +1,4 @@
 *.log
 *.sqlite
 i18n/en_originaltranslations.txt
+build/

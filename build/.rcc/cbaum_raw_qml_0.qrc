@@ -1,6 +1,0 @@
-<RCC>
-  <qresource prefix="/cbaum/">
-    <file alias="cbaum.qml">/home/aumhren/dev/cbaum/cbaum.qml</file>
-  </qresource>
-</RCC>
-
