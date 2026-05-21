@@ -1,0 +1,6 @@
+{
+  "projectFile": "/home/aumhren/dev/cbaum/CMakeLists.txt",
+  "includePaths": [ "/home/aumhren/dev/cbaum/build/cbaum_autogen/include", "/home/aumhren/dev/cbaum", "/usr/include/x86_64-linux-gnu/qt6/QtQml/6.4.2", "/usr/include/x86_64-linux-gnu/qt6/QtQml/6.4.2/QtQml", "/usr/include/x86_64-linux-gnu/qt6/QtCore/6.4.2", "/usr/include/x86_64-linux-gnu/qt6/QtCore/6.4.2/QtCore", "/usr/include/x86_64-linux-gnu/qt6/QtCore", "/usr/include/x86_64-linux-gnu/qt6", "/usr/lib/x86_64-linux-gnu/qt6/mkspecs/linux-g++", "/usr/include/x86_64-linux-gnu/qt6", "/usr/include/x86_64-linux-gnu/qt6/QtQml", "/usr/include/x86_64-linux-gnu/qt6", "/usr/include/x86_64-linux-gnu/qt6/QtQmlIntegration", "/usr/include/x86_64-linux-gnu/qt6", "/usr/include/x86_64-linux-gnu/qt6/QtNetwork", "/usr/include/x86_64-linux-gnu/qt6" ],
+  "sources": [ "/home/aumhren/dev/cbaum/cbaum.qml", "/usr/lib/x86_64-linux-gnu/metatypes/qt6qml_none_metatypes.json", "/usr/lib/x86_64-linux-gnu/metatypes/qt6core_none_metatypes.json", "/usr/lib/x86_64-linux-gnu/metatypes/qt6network_none_metatypes.json" ],
+  "translations": [  ]
+}

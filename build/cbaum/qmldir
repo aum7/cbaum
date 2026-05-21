@@ -1,0 +1,7 @@
+module cbaum
+linktarget cbaumplugin
+optional plugin cbaumplugin
+classname cbaumPlugin
+typeinfo cbaum.qmltypes
+prefer :/cbaum/
+

@@ -1,0 +1,6 @@
+<RCC>
+  <qresource prefix="/cbaum">
+    <file alias="qmldir">/home/aumhren/dev/cbaum/build/cbaum/qmldir</file>
+  </qresource>
+</RCC>
+
