@@ -33,7 +33,7 @@ MuseScore {
   property int comboWidth: 110
   // color configuration
   readonly property color darkTheme: "#1a1a1a"
-  readonly property color lightTheme: "white"
+  // readonly property color lightTheme: "white"
   readonly property color highlight1: "dodgerblue"
   readonly property color highlight2: "darkorange"
   readonly property color highlight3: "green"
@@ -174,13 +174,13 @@ MuseScore {
       // automatic chord identification
       var activeStaffPitches = showTreble ? tempTreble : bassPitches
       if (activeStaffPitches.length === 0) {
-        foundChordLabel.text = qsTr("none")
+        foundChordLbl.text = qsTr("none")
       } else if (activeStaffPitches.length < 3) {
-        foundChordLabel.text = qsTr("select 3+ notes")
+        foundChordLbl.text = qsTr("select 3+ notes")
       } else {
         // make sorted copy
         var sortedPitches = activeStaffPitches.slice().sort(function(a, b) { return a - b })
-        foundChordLabel.text = identifyChord(sortedPitches)
+        foundChordLbl.text = identifyChord(sortedPitches)
       }
       if (foundChordTonality !== "") {
         console.log("tonality=", foundChordTonality)
@@ -297,7 +297,127 @@ MuseScore {
     bassActivePitches = tempBass
     }
   } // timer end
-  // fingering text
+  // highlight buttons for selected treble notes
+  function mapButtonToMidi(row, col) {
+    var base = selectedTrebleLayout.start
+    var off = selectedTrebleLayout.offset[col]
+    return (base + off) + (row * 3)
+  }
+  // highlight buttons for selected bass notes
+  function mapMelodicBass(row, col) {
+    var stradellaFB = 42 + (row * 5) // 5ths
+    if (!meloBassMode) { // stradella standard
+      if (col === 5) return stradellaFB + 4
+      return stradellaFB
+      } else {
+        if (col >= 4) {
+          return (col === 5) ? (stradellaFB + 4) : stradellaFB
+        }
+      var base = selectedBassLayout.start
+      var off = selectedBassLayout.offset[col]
+      var step = selectedBassLayout.vStep
+      // bass 3 5ths needs extra lowe
+      if (selectedBassLayout.name === "5ths") {
+        var targetPitch = (base + off) + (row * step)
+        while (targetPitch > 83) targetPitch -= 12
+        while (targetPitch < 60) targetPitch += 12
+        return targetPitch
+      }
+      return (base + off) + (row * step)
+    }
+  }
+  // color scheme of buttons & button text color
+  function isBlackButton(pitch) {
+    var p = pitch % 12
+    return (p === 1 || p === 3 || p === 6 || p === 8 || p === 10)
+  }
+  // names of selected notes
+  function getNoteName(pitch) {
+    var names = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
+    return names[pitch % 12]
+  }
+  // identify chord from selected notes
+  function identifyChord(pitches) {
+    var normalized = []
+    for (var i = 0; i < pitches.length; i++) {
+      var p = pitches[i] % 12
+      if (normalized.indexOf(p) === -1) normalized.push(p)
+    }
+    // lowest selected note
+    var bassNote = (pitches[0] % 12 + 12) % 12
+    for (var r = 0; r < normalized.length; r++) {
+      var root = normalized[r]
+      var mask = 0
+      // calculate 12-bit fingerprint relative to root
+      for (var j = 0; j < normalized.length; j++) {
+        var interval = (normalized[j] - root + 12) % 12
+        mask |= (1 << interval)
+      }
+      // check against our bitmask map
+      if (chordMap[mask] !== undefined) {
+        var suffix = chordMap[mask]
+        var chordName = getNoteName(root) + suffix
+        // add slash bass notation if root isnt bottom mote
+        if (root !== bassNote) {
+          chordName += "/" + getNoteName(bassNote)
+        }
+        return chordName
+      }
+    }
+    return qsTr("unknown")
+  }
+  // add staff text : identified chord
+  function addChordText() {
+    // console.log(qsTr("adding chord text to selected notes"))
+    var chordFound = foundChordLbl.text
+    if (!chordFound || 
+      chordFound === "none" || 
+      chordFound === "unknown" || 
+      chordFound.indexOf("select") !== -1) return
+    var selection = curScore.selection.elements
+    if (selection.length === 0) {
+      console.log("[addChordText] nothing selected : exiting ...")
+      return
+    }
+    // find 1st note of chord to get valid segment
+    var firstNote = null
+    for (var i = 0; i < selection.length; i++) {
+      if (selection[i].type === Element.NOTE) { 
+        firstNote = selection[i]
+        break
+      }
+    }
+    if (!firstNote) {
+      console.log("[addChordText] no firstNote : exiting ...")
+      return
+    }
+    // console.log("addChordText : firstNote=" + firstNote)
+    // console.log("addChordText : firstNote.track=" + firstNote.track)
+
+    curScore.startCmd()
+    var textObj = newElement(Element.STAFF_TEXT)
+    textObj.text = chordFound
+    var cursor = curScore.newCursor()
+    cursor.track = firstNote.track  // point auto-assigned track
+    console.log("addChordText : cursor.track=" + cursor.track)
+    cursor.rewind(0) // (Cursor.SELECTION_START)  // start of score
+    var targetTick = firstNote.parent.parent.tick
+    // fast forward
+    while (cursor.segment && cursor.tick < targetTick) {
+      cursor.next()
+    }
+    // write to score
+    if (cursor.segment && cursor.tick === targetTick) {
+      cursor.add(textObj)
+    } else {
+      // fallback
+      if (firstNote.parent) {
+        firstNote.parent.add(textObj)
+      }
+    }
+    curScore.endCmd()
+  }
+  // fingering text : add | toggle visibility | change fingering on double click
   function hideFinger() {
     if (!curScore || curScore.selection.elements.length === 0) {
       console.log("hideFinger : no score or nothing selected : exiting ...")
@@ -317,14 +437,14 @@ MuseScore {
     }
     curScore.endCmd()
   }
-  
+  // find if for selected notes a fingering text already exists
   function getExistingFinger(note) {
     for (var i = 0; i < note.elements.length; i++) {
       if (note.elements[i].type == Element.FINGERING) return note.elements[i]
     }
     return null
   }
-
+  // collect notes data
   function calcFinger(requestAlternate) {
     if (!curScore || curScore.selection.elements.length === 0) {
       console.log("calcFinger : no score or nothing selected : exiting ...")
@@ -343,7 +463,6 @@ MuseScore {
     var notesSequence = []
     // console.log("calcFinger : notesSequence=", notesSequence)
     var cursor = curScore.newCursor()
-    // cursor.track = sel.elements[0].track
     cursor.rewind(Cursor.SELECTION_START)
     while (cursor.segment && cursor.tick < endTick) {
       if (cursor.tick >= startTick &&
@@ -396,7 +515,8 @@ MuseScore {
     }
     curScore.endCmd()
   }
-  
+  // calculate fingering for selected notes | get alternate fingering on double click
+  // todo needsLove : better alternate finger selection logic
   function getFinger(pitch, direction, isChromatic, requestAlternate, prev, next) {
     var noteClass = pitch % 12 // todo more dynamic results we wanna
     var cFinger = "3"
@@ -454,126 +574,11 @@ MuseScore {
       bFinger = "4"
     }
     return cFinger + "\n" + bFinger
-  }
-
-  function mapButtonToMidi(row, col) {
-    var base = selectedTrebleLayout.start
-    var off = selectedTrebleLayout.offset[col]
-    return (base + off) + (row * 3)
-  }
-  function mapMelodicBass(row, col) {
-    var stradellaFB = 42 + (row * 5) // 5ths
-    if (!meloBassMode) { // stradella standard
-      if (col === 5) return stradellaFB + 4
-      return stradellaFB
-      } else {
-        if (col >= 4) {
-          return (col === 5) ? (stradellaFB + 4) : stradellaFB
-        }
-      var base = selectedBassLayout.start
-      var off = selectedBassLayout.offset[col]
-      var step = selectedBassLayout.vStep
-      // bass 3 5ths needs extra lowe
-      if (selectedBassLayout.name === "5ths") {
-        var targetPitch = (base + off) + (row * step)
-        while (targetPitch > 83) targetPitch -= 12
-        while (targetPitch < 60) targetPitch += 12
-        return targetPitch
-      }
-      return (base + off) + (row * step)
-    }
-  }
-  function isBlackButton(pitch) {
-    var p = pitch % 12
-    return (p === 1 || p === 3 || p === 6 || p === 8 || p === 10)
-  }
-  function getNoteName(pitch) {
-    var names = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
-    return names[pitch % 12]
-  }
-  function identifyChord(pitches) {
-    var normalized = []
-    for (var i = 0; i < pitches.length; i++) {
-      var p = pitches[i] % 12
-      if (normalized.indexOf(p) === -1) normalized.push(p)
-    }
-    // lowest selected note
-    var bassNote = (pitches[0] % 12 + 12) % 12
-    for (var r = 0; r < normalized.length; r++) {
-      var root = normalized[r]
-      var mask = 0
-      // calculate 12-bit fingerprint relative to root
-      for (var j = 0; j < normalized.length; j++) {
-        var interval = (normalized[j] - root + 12) % 12
-        mask |= (1 << interval)
-      }
-      // check against our bitmask map
-      if (chordMap[mask] !== undefined) {
-        var suffix = chordMap[mask]
-        var chordName = getNoteName(root) + suffix
-        // add slash bass notation if root isnt bottom mote
-        if (root !== bassNote) {
-          chordName += "/" + getNoteName(bassNote)
-        }
-        return chordName
-      }
-    }
-    return qsTr("unknown")
-  }
-
-  function addChordText() {
-    // console.log(qsTr("adding chord text to selected notes"))
-    var chordFound = foundChordLabel.text
-    if (!chordFound || 
-      chordFound === "none" || 
-      chordFound === "unknown" || 
-      chordFound.indexOf("select") !== -1) return
-    var selection = curScore.selection.elements
-    if (selection.length === 0) {
-      console.log("[addChordText] nothing selected : exiting ...")
-      return
-    }
-    // find 1st note of chord to get valid segment
-    var firstNote = null
-    for (var i = 0; i < selection.length; i++) {
-      if (selection[i].type === Element.NOTE) { 
-        firstNote = selection[i]
-        break
-      }
-    }
-    if (!firstNote) {
-      console.log("[addChordText] no firstNote : exiting ...")
-      return
-    }
-    console.log("[addChordText] firstNote=" + firstNote)
-    console.log("[addChordText] firstNote.track=" + firstNote.track)
-
-    curScore.startCmd()
-    var textObj = newElement(Element.STAFF_TEXT)
-    textObj.text = chordFound
-    var cursor = curScore.newCursor()
-    cursor.track = firstNote.track  // point auto-assigned track
-    console.log("[addChordText] cursor.track=" + cursor.track)
-    cursor.rewind(0) // (Cursor.SELECTION_START)  // start of score
-    var targetTick = firstNote.parent.parent.tick
-    // fast forward
-    while (cursor.segment && cursor.tick < targetTick) {
-      cursor.next()
-    }
-    // write to score
-    if (cursor.segment && cursor.tick === targetTick) {
-      cursor.add(textObj)
-    } else {
-      // fallback
-      if (firstNote.parent) {
-        firstNote.parent.add(textObj)
-      }
-    }
-    curScore.endCmd()
-  }
-  // functions end
+  } // functions end
+  // uia
   Window {
     id: mainWindow
+    // added spaces at end to align text in title bar
     title: qsTr("poland chroma-button-accordion      ")
     flags: Qt.Window | Qt.WindowMinimizeButtonHint | Qt.WindowCloseButtonHint |
       Qt.WindowStaysOnTopHint // | Qt.WindowTitleHint | Qt.WindowSystemMenuHint
@@ -583,22 +588,21 @@ MuseScore {
     y: 0 // move down from top
     visible: true
     color: darkTheme
-    
-    Column { // has single column
+    // single column as main container : stack vertically
+    Column {
       id: mainWidget
       width: parent.width
       height: parent.height
       anchors.fill: parent
       topPadding: 5
-      Row { // chord identifier
+      Row { // fixed panel : chord identifier
         id: row1
         height: 30
-        spacing: 4
-        // width: parent.width
+        spacing: 6
         anchors.horizontalCenter: parent.horizontalCenter
         Label {
-          id: foundChordLabel
-          width: 180 
+          id: foundChordLbl
+          width: 178 
           text: qsTr("none")
           horizontalAlignment: Text.AlignHCenter
           verticalAlignment: Text.AlignVCenter
@@ -608,9 +612,9 @@ MuseScore {
           padding: 0
           fontSizeMode: Text.Fit
           ToolTip.text: qsTr("identify chord from selected notes - min 3" +
-            "\nnotes need be shift-selected, ie with top note" +
-            "\nof chord selected > shift+down arrow will" +
-            "\nsquare-select all chord notes" +
+            // "\nnotes need be shift-selected, ie with top note" +
+            // "\nof chord selected > shift+down arrow will" +
+            // "\nsquare-select all chord notes" +
             "\ncan be added to selected notes")
           ToolTip.visible: showTooltips &&chordLabelMArea.containsMouse 
           ToolTip.delay: tooltipDelay 
@@ -628,7 +632,6 @@ MuseScore {
           ToolTip.text: qsTr("toggle plugin position")
           ToolTip.visible: showTooltips && hovered
           ToolTip.delay: tooltipDelay 
-          // fontSizeMode: Text.fit
           onClicked: {
             if (mainWindow.x === 0) {
               // move to screen top & collapse
