@@ -22,7 +22,7 @@ MuseScore {
   //   var lang = localeName.split("_")[0]
   //   console.log("cbaplugin : host language detected=", lang)
   //   }
-  property int expandedHeight: 850
+  property int expandedHeight: 830
   property int collapsedHeight: 57
   property var lastClickTime: 0
   property var doubleClickSpeed: 700
@@ -71,11 +71,14 @@ MuseScore {
   ]
   property var selectedTrebleLayout: trebleLayouts[0]
   // buttonboard bass layouts
-  property var bassLayouts: [ // name, lowest note, offset from lowest = start MIDI
-    { name: "minor 3rds",start: 54, offset: [0, 1, 2, 3, 4], vStep: 3 }, // C-griff Europe mirror
+  property var bassLayouts: [ // name, lowest note, offset from lowest, step from previous
+    // C-griff Europe mirror
+    { name: "minor 3rds",start: 54, offset: [0, 1, 2, 3, 4], vStep: 3 },
+    // speciality
     { name: "Bayan", start: 54, offset: [29, 28, 27, 26, 4], vStep: -3 },
-    { name: "5ths", start: 54, offset: [24, 28, 12, 16, 4], vStep: 5 }, // todo double-check
-    { name: "N. Europe", start: 54, offset: [-1, 1, 3, 5, 4], vStep: 3 }, // b-griff bayan mirror
+    { name: "5ths", start: 54, offset: [24, 28, 12, 16, 4], vStep: 5 },
+    // b-griff bayan mirror
+    { name: "N. Europe", start: 54, offset: [-1, 1, 3, 5, 4], vStep: 3 },
     { name: "Finnish", start: 54, offset: [-1, 0, 1, 2, 4], vStep: 3 },
   ]
   property var selectedBassLayout: bassLayouts[0]
@@ -122,13 +125,13 @@ MuseScore {
           var pitch = elements[i].pitch
           var track = elements[i].track
           var text = elements[i].parent
-          if (track >= 0 && track < 4) { // track 0-3 = treble staff
+          if (track >= 0 && track < 4) { // track 0-3 = treble staff 4 voices
             showTreble = true
             var shiftedPitch = pitch - treble8veShift
             if (tempTreble.indexOf(shiftedPitch) === -1) {
               tempTreble.push(shiftedPitch)
             }
-          } else if (track >= 4 && track < 8) { // bass staff
+          } else if (track >= 4 && track < 8) { // bass staff 4 voices
             showTreble = false
             if (bassPitches.indexOf(pitch) === -1) {
               bassPitches.push(pitch)
@@ -148,7 +151,7 @@ MuseScore {
                       annTxt === "7" || annTxt === "o") {
                         foundChordTonality = annTxt
                     } else {
-                      // get chord from chord marking above note(s)
+                      // get chord from chord text marking above note(s)
                       var chordMatch = annTxt.match(/^[A-G][#b♮♯♭]?(.*)$/i)
                       if (chordMatch) {
                         var suffix = chordMatch[1].trim().toLowerCase()
@@ -298,7 +301,7 @@ MuseScore {
     }
   } // timer end
   // highlight buttons for selected treble notes
-  function mapButtonToMidi(row, col) {
+  function mapTrebleNotes(row, col) {
     var base = selectedTrebleLayout.start
     var off = selectedTrebleLayout.offset[col]
     return (base + off) + (row * 3)
@@ -575,7 +578,7 @@ MuseScore {
     }
     return cFinger + "\n" + bFinger
   } // functions end
-  // uia
+  // user interface
   Window {
     id: mainWindow
     // added spaces at end to align text in title bar
@@ -678,7 +681,7 @@ MuseScore {
           cursorShape: Qt.PointingHandCursor
           onClicked: {
             showButtonboard = !showButtonboard
-            // made mu3 collapse bottom panel
+            // toggle buttonboard visibility by plugin height
             var targetHeight = showButtonboard ? expandedHeight : collapsedHeight
             cbaplugin.height = targetHeight
             mainWindow.height = targetHeight
@@ -694,13 +697,14 @@ MuseScore {
         // row2 
         Row { // checkboxes
           id: row2
-          height: 20
+          height: 26
           anchors.horizontalCenter: parent.horizontalCenter
           spacing: 7
+          topPadding: 5
           // use melodic / free bass for chord presentation
           CheckBox {
             id: meloBassCbx
-            text: qsTr("MB") // for majority langs this can stay MB ???
+            text: qsTr("MB")
             checked: meloBassMode 
             onCheckedChanged: meloBassMode = checked
             ToolTip.text: qsTr("present as melodic / free bass chord" +
@@ -729,7 +733,7 @@ MuseScore {
               verticalAlignment: Text.AlignVCenter
             }
           } 
-          // show fingering
+          // show fingering of selected notes
           CheckBox {
             id: fingerCbx
             text: qsTr("fingering")
@@ -767,8 +771,9 @@ MuseScore {
           }
           // toggle tooltip visibility
           CheckBox {
-            text: qsTr("TT")
-            ToolTip.text: qsTr("toggle tooltips visibility")
+            text: qsTr("?")
+            ToolTip.text: qsTr("toggle tooltips visibility" +
+              "\nhover mouse over elements")
             ToolTip.visible: showTooltips && hovered
             ToolTip.delay: tooltipDelay 
             checked:showTooltips 
@@ -787,6 +792,7 @@ MuseScore {
           height: 25
           spacing: 12
           anchors.horizontalCenter: parent.horizontalCenter
+          visible: showTreble
           ComboBox { // treble selector
             id: trebleSelector
             width: comboWidth
@@ -814,6 +820,7 @@ MuseScore {
           height: 30
           spacing: 12
           anchors.horizontalCenter: parent.horizontalCenter
+          visible: !showTreble
           ComboBox { // bass selector
             id: bassSelector
             width: comboWidth 
@@ -839,10 +846,11 @@ MuseScore {
         Column { // buttonboards
           id: boardWidget
           width: parent.width
+          topPadding: 7
           spacing: 20
           // treble board
           Item {
-            id: trebleBrdItem
+            id: trebleBrdItm
             width: parent.width
             height: trebleRow.height
             visible: showTreble
@@ -865,7 +873,7 @@ MuseScore {
                       // selection (playback) highlight
                       property bool isSelected: trebleActivePitches.indexOf(pitch) !== -1
                       // calculate pitch
-                      property int pitch: mapButtonToMidi(index, colIndex)
+                      property int pitch: mapTrebleNotes(index, colIndex)
                       // determine button color
                       property bool black: isBlackButton(pitch)
                       color: isSelected ? highlight1 :
@@ -875,7 +883,8 @@ MuseScore {
                       Text {
                         anchors.centerIn: parent
                         text: !black ? getNoteName(pitch) : ""
-                        visible: !black && showButtonTones // only show naturals
+                        // only show names for naturals
+                        visible: !black && showButtonTones
                         font.pixelSize: buttonFontSize
                         color: (black || isSelected) ? "white" : "black"
                       }
@@ -887,7 +896,7 @@ MuseScore {
           }
           // bass board
           Item { // accidentals included
-            id: bassBrdItem
+            id: bassBrdItm
             width: parent.width
             height: !showTreble ? bassRow.height : 0 
             visible: !showTreble
