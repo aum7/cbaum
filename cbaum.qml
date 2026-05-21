@@ -11,16 +11,17 @@ import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Window 2.2
 import QtQuick.VectorImage
+import "translations/translations.js" as I18n
 
 MuseScore {
   id: cbaplugin
   version: "1.0"
   description: qsTr("chromatic button accordion visual helper with chord identifier")
-  Component.onCompleted: {
-    var localeName = Qt.locale().name
-    var lang = localeName.split("_")[0]
-    console.log("cbaplugin : host language detected=", lang)
-    }
+  // Component.onCompleted: {
+  //   var localeName = Qt.locale().name
+  //   var lang = localeName.split("_")[0]
+  //   console.log("cbaplugin : host language detected=", lang)
+  //   }
   property int windowHeight: 850
   property int collapsedHeight: 57
   property var lastClickTime: 0
