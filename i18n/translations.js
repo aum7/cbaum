@@ -98,7 +98,7 @@ var TRdictionary = {
   }
 }
 
-function translate(key, lang) {
+function trsl(key, lang) {
   if (TRdictionary[key]) {
     if (TRdictionary[key][lang]) {
       return TRdictionary[key][lang]
