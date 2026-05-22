@@ -11,6 +11,7 @@ get visual help at first hours of knowing that magnificent instrument of yours
 * *collapsible window for minimal score clutter*
 * ***buttonboards from player perspective***
 * *6 treble & 5 bass layouts - modeled from poland fr 1 xb v-accordion*
+* *treble & bass 8ve shift*
 * *dark theme - eyes & wallet friendly*
 * ***0 (zero) carbon emission & 100 % recyclable***
 * *multi-lingual : english | deutsch | français | español*
@@ -30,10 +31,14 @@ unzip into your musescore plugins directory, ie :
 enable via plugin manager :
 
 * in museScore > plugins > manage plugins (or home > plugins ...)
-* select the plugin
-* click enable
+* disabled > select cbaum plugin & click enable
+
+run via same path :
+
+* museScore > plugins > cbaum
 
 *made with mu4.7 & a lot of hasLove - includes manyAsleeplesNights potion*
+
 *fair warning : **do not overuse***
 
 ### license

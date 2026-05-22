@@ -7,6 +7,7 @@
 //    collapsible window for minimal score clutter
 //    buttonboards from player perspective
 //    6 treble & 5 bass layouts - modeled from poland fr 1 xb v-accordion
+//    treble & bass 8ve shift
 //    dark theme - eyes & wallet friendly
 //    0 (zero) carbon emission & 100 % recyclable
 //    multi-lingual : english | deutsch | français | español
