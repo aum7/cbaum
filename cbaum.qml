@@ -22,16 +22,14 @@ MuseScore {
     var lang = localeName.split("_")[0]
     console.log("cbaplugin host language=", lang)
     }
-  property int expandedHeight: 830
+  property int expandedHeight: 836
   property int collapsedHeight: 57
   property var lastClickTime: 0
   property var doubleClickSpeed: 700
   property var showTooltips: false
-  property int iconSize: 22
-  // property var imagesPath: "/imgs/"
+  property int iconSize: 30 
   // toggle buttonboard visibility
-  property bool showButtonboard: false 
-  property int btnBoardHeight: 70
+  property bool showButtonboard: true 
   property int comboWidth: 110
   // color configuration
   readonly property color darkTheme: "#1a1a1a"
@@ -589,8 +587,8 @@ MuseScore {
       Qt.WindowStaysOnTopHint // | Qt.WindowTitleHint | Qt.WindowSystemMenuHint
     width: 300
     height: showButtonboard ? expandedHeight : collapsedHeight
-    x: 970 // move from left edge
-    y: 0 // move down from top
+    x: showButtonboard ? 0 : 970 // dock left if showing buttonboard
+    y: showButtonboard ? 124 : 0  // dock top if not showing buttonboard
     visible: true
     color: darkTheme
     // single column as main container : stack vertically
@@ -602,26 +600,24 @@ MuseScore {
       topPadding: 5
       Row { // fixed panel : chord identifier
         id: row1
-        height: 30
+        height: 32
         spacing: 6
         anchors.horizontalCenter: parent.horizontalCenter
         Label {
           id: foundChordLbl
-          width: 178 
+          width: 250
           text: qsTr("none")
           horizontalAlignment: Text.AlignHCenter
           verticalAlignment: Text.AlignVCenter
-          font.pixelSize: 18
-          minimumPixelSize: 10
+          font.pixelSize: 22
+          minimumPixelSize: 16
           color: "dodgerblue"
-          padding: 0
+          // topPadding: 2
           fontSizeMode: Text.Fit
           ToolTip.text: qsTr("identify chord from selected notes - min 3" +
-            // "\nnotes need be shift-selected, ie with top note" +
-            // "\nof chord selected > shift+down arrow will" +
-            // "\nsquare-select all chord notes" +
+            "\ndouble-click any chord note to select chord" +
             "\ncan be added to selected notes")
-          ToolTip.visible: showTooltips &&chordLabelMArea.containsMouse 
+          ToolTip.visible: showTooltips && chordLabelMArea.containsMouse 
           ToolTip.delay: tooltipDelay 
           MouseArea {
             id: chordLabelMArea
@@ -630,36 +626,38 @@ MuseScore {
             acceptedButtons: Qt.NoButton // allow click pass through
           }
         }
-        Button {
-          id: togglePositionBtn
-          width:24 
-          text: qsTr("<>")
-          ToolTip.text: qsTr("toggle plugin position")
-          ToolTip.visible: showTooltips && hovered
+        // add identified chord as staff text
+        Rectangle {
+          id: addChordRect
+          width: 26 
+          height: 26 
+          color: "transparent"
+          ToolTip.text: qsTr("add identified chord to selected notes")
+          ToolTip.visible: showTooltips && addChordMArea.containsMouse 
           ToolTip.delay: tooltipDelay 
-          onClicked: {
-            if (mainWindow.x === 0) {
-              // move to screen top & collapse
-              mainWindow.x = 970
-              mainWindow.y = 0
-              showButtonboard = false
-              mainWindow.height = collapsedHeight 
-            } else {
-              // move over left panel & expand
-              mainWindow.x = 0
-              mainWindow.y = 70
-              showButtonboard = true
-              mainWindow.height = expandedHeight
+          MouseArea {
+            id: addChordMArea
+            anchors.centerIn: parent
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            // vector graphics
+            Image {
+              id: addChordImg
+              anchors.fill: parent
+              anchors.topMargin: 3
+              source: addChordMArea.containsMouse ? Qt.resolvedUrl("imgs/addchordblue.png") :
+                "imgs/addchordgray.png"
+              smooth: true
+              antialiasing: true
+              fillMode: Image.PreserveAspectFit
+            }
+            // click handler
+            onClicked: {
+              addChordText()
+              // console.log("added chord text")
             }
           }
-        }
-        Button {
-          id: addAsTextBtn
-          text: qsTr("add as text")
-          ToolTip.text: qsTr("add identified chord to selected notes")
-          ToolTip.visible: showTooltips && hovered
-          ToolTip.delay: tooltipDelay 
-          onClicked: addChordText()
         }
       }
       // toggle separator
@@ -674,10 +672,10 @@ MuseScore {
           height: 12
           radius: 4
           anchors.centerIn: parent
-          color: toggleBtnBrdMouseArea.containsMouse ? highlight1 : "#3c3c3c"
+          color: toggleBtnBrdMArea.containsMouse ? highlight1 : "#3c3c3c"
         }
         MouseArea {
-          id: toggleBtnBrdMouseArea
+          id: toggleBtnBrdMArea
           anchors.fill: parent
           hoverEnabled: true
           cursorShape: Qt.PointingHandCursor
@@ -699,50 +697,90 @@ MuseScore {
         // row2 
         Row { // checkboxes
           id: row2
-          height: 26
+          height: 32 
           anchors.horizontalCenter: parent.horizontalCenter
-          spacing: 7
-          topPadding: 5
+          spacing: 40
+          topPadding: 4
           // use melodic / free bass for chord presentation
-          CheckBox {
-            id: meloBassCbx
-            text: qsTr("MB")
-            checked: meloBassMode 
-            onCheckedChanged: meloBassMode = checked
-            ToolTip.text: qsTr("present as melodic / free bass chord" +
+          Rectangle {
+            id: meloBassRect
+            width: iconSize 
+            height: iconSize
+            color: "transparent"
+            ToolTip.text: qsTr("present as melodic / free bass" +
               "\nvs default stradella bass")
-            ToolTip.visible: showTooltips && hovered
+            ToolTip.visible: showTooltips && meloBassMArea.containsMouse 
             ToolTip.delay: tooltipDelay 
-            contentItem: Text {
-              text: parent.text
-              color: "white"
-              leftPadding: textLeftPadding 
-              verticalAlignment: Text.AlignVCenter
+            MouseArea {
+              id: meloBassMArea
+              anchors.centerIn: parent
+              anchors.fill: parent
+              hoverEnabled: true
+              cursorShape: Qt.PointingHandCursor
+              // vector graphics
+              Image {
+                id: meloBassImg
+                anchors.fill: parent
+                anchors.topMargin: 5
+                source: meloBassMode ? Qt.resolvedUrl("imgs/melobassblue.png") :
+                  (meloBassMArea.containsMouse ? "imgs/melobasswhite.png" :
+                  "imgs/melobassgray.png")
+                smooth: true
+                antialiasing: true
+                fillMode: Image.PreserveAspectFit
+              }
+              // click handler
+              onClicked: {
+                meloBassMode = !meloBassMode
+                console.log("meloBassMode=", meloBassMode)
+              }
             }
           }
           // show tone names on buttons
-          CheckBox {
-            text: qsTr("tones")
-            ToolTip.text: qsTr("show tone names on buttons")
-            ToolTip.visible: showTooltips && hovered
+          Rectangle {
+            id: buttonTonesRect
+            width: iconSize 
+            height: iconSize
+            color: "transparent"
+            ToolTip.text: qsTr("toggle button names")
+            ToolTip.visible: showTooltips && buttonTonesMArea.containsMouse 
             ToolTip.delay: tooltipDelay 
-            checked: showButtonTones
-            onCheckedChanged: showButtonTones = checked
-            contentItem: Text {
-              text: parent.text
-              color: "white"
-              leftPadding: textLeftPadding
-              verticalAlignment: Text.AlignVCenter
+            MouseArea {
+              id: buttonTonesMArea
+              anchors.centerIn: parent
+              anchors.fill: parent
+              hoverEnabled: true
+              cursorShape: Qt.PointingHandCursor
+              // vector graphics
+              Image {
+                id: buttonTonesImg
+                anchors.fill: parent
+                anchors.topMargin: 5
+                source: showButtonTones ? Qt.resolvedUrl("imgs/buttonnamesblue.png") :
+                  (buttonTonesMArea.containsMouse ? "imgs/buttonnameswhite.png" :
+                  "imgs/buttonnamesgray.png")
+                smooth: true
+                antialiasing: true
+                fillMode: Image.PreserveAspectFit
+              }
+              // click handler
+              onClicked: {
+                showButtonTones = !showButtonTones
+                console.log("showButtonTones=", showButtonTones)
+              }
             }
-          } 
+          }
           // show fingering of selected notes : custom toggle icon
           Rectangle {
             id: fingerRect
             width: iconSize 
             height: iconSize
-            radius: 3
             color: "transparent"
-            // color: "#272727"
+            ToolTip.text: qsTr("add, hide or change fingering in treble part" +
+              "\nselect whole measures" +
+              "\ndouble-click to alternate fingering")
+            ToolTip.visible: showTooltips && fingerMArea.containsMouse
+            ToolTip.delay: tooltipDelay 
             MouseArea {
               id: fingerMArea
               anchors.centerIn: parent
@@ -753,26 +791,13 @@ MuseScore {
               Image {
                 id: fingerImg
                 anchors.fill: parent
-                source: Qt.resolvedUrl("imgs/fingering.svg")
+                anchors.topMargin: 5
+                source: showFingering ? Qt.resolvedUrl("imgs/fingerblue.png") :
+                  (fingerMArea.containsMouse ? "imgs/fingerwhite.png" :
+                  "imgs/fingergray.png")
                 smooth: true
                 antialiasing: true
                 fillMode: Image.PreserveAspectFit
-                // color: "white"
-                // state: "defaultClr"
-                // states: [
-                //   State {
-                //     name: "hoverClr"
-                //     PropertyChanges { fingerRect.color: "#474747" }
-                //   },
-                //   State {
-                //     name: "clickClr"
-                //     PropertyChanges { fingerRect.color: "dodgerblue" }
-                //   },
-                //   State {
-                //     name: "defaultClr"
-                //     PropertyChanges { fingerRect.color: "white" }
-                //   }
-                // ]
               }
               // click handler
               onClicked: {
@@ -783,74 +808,54 @@ MuseScore {
                   console.log("alternate fingering ...")
                   showFingering = true
                   calcFinger(true)
-                  // state: "clickClr"
+                } else {
+                  if (showFingering) {
+                    console.log("initial fingering ...")
+                    calcFinger(false) // initial calculation
                   } else {
-                    if (showFingering) {
-                      console.log("initial fingering ...")
-                      // showFingering = false
-                      calcFinger(false) // initial calculation
-                    } else {
-                      console.log("hiding fingering ...")
-                      // showFingering = false
-                      hideFinger()
-                    }
+                    console.log("hiding fingering ...")
+                    hideFinger()
                   }
-                  lastClickTime = currentTime
                 }
+                lastClickTime = currentTime
               }
             }
-          // }
-          // CheckBox {
-          //   id: fingerCbx
-          //   text: qsTr("fingering")
-          //   ToolTip.text: qsTr("add, hide or change fingering in treble part" +
-          //     "\nselect whole measures" +
-          //     "\ndouble-click to alternate fingering")
-          //   ToolTip.visible: showTooltips && hovered
-          //   ToolTip.delay: tooltipDelay 
-          //   checked: showFingering
-          //   onCheckedChanged: showFingering = checked
-          //   onClicked: {
-          //     var currentTime = new Date().getTime()
-          //     // detect double-click
-          //     if (currentTime - lastClickTime < doubleClickSpeed) {
-          //     console.log("onClicked : alternate fingering ...")
-          //     checked = true
-          //     calcFinger(true)
-          //     } else {
-          //       if (checked) {
-          //         console.log("onClicked : initial fingering ...")
-          //         calcFinger(false) // initial calculation
-          //       } else {
-          //         console.log("onClicked : hiding fingering ...")
-          //         hideFinger()
-          //       }
-          //     }
-          //     lastClickTime = currentTime
-          //   }
-          //   contentItem: Text {
-          //     text: parent.text
-          //     color: "white"
-          //     leftPadding: textLeftPadding
-          //     verticalAlignment: Text.AlignVCenter
-          //   } 
-          // }
+          }
           // toggle tooltip visibility
-          CheckBox {
-            text: qsTr("?")
+          Rectangle {
+            id: tooltipsRect 
+            width: iconSize 
+            height: iconSize
+            color: "transparent"
             ToolTip.text: qsTr("toggle tooltips visibility" +
               "\nhover mouse over elements")
-            ToolTip.visible: showTooltips && hovered
+            ToolTip.visible: showTooltips && tooltipsMArea.containsMouse 
             ToolTip.delay: tooltipDelay 
-            checked:showTooltips 
-            onCheckedChanged: showTooltips = checked
-            contentItem: Text {
-              text: parent.text
-              color: "white"
-              leftPadding: textLeftPadding
-              verticalAlignment: Text.AlignVCenter
+            MouseArea {
+              id: tooltipsMArea
+              anchors.centerIn: parent
+              anchors.fill: parent
+              hoverEnabled: true
+              cursorShape: Qt.PointingHandCursor
+              // vector graphics
+              Image {
+                id: tooltipsImg
+                anchors.fill: parent
+                anchors.topMargin: 5
+                source: showTooltips ? Qt.resolvedUrl("imgs/helpblue.png") :
+                  (tooltipsMArea.containsMouse ? "imgs/helpwhite.png" :
+                  "imgs/helpgray.png")
+                smooth: true
+                antialiasing: true
+                fillMode: Image.PreserveAspectFit
+              }
+              // click handler
+              onClicked: {
+                showTooltips = !showTooltips
+                console.log("showTooltips=", showTooltips)
+              }
             }
-          } 
+          }
         }
         // row 3 
         Row { // treble layout selection
