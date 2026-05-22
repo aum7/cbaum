@@ -674,6 +674,9 @@ MuseScore {
           anchors.centerIn: parent
           color: toggleBtnBrdMArea.containsMouse ? highlight1 : "#3c3c3c"
         }
+        ToolTip.text: qsTr("toggle plugin position")
+        ToolTip.visible: showTooltips && toggleBtnBrdMArea.containsMouse 
+        ToolTip.delay: tooltipDelay 
         MouseArea {
           id: toggleBtnBrdMArea
           anchors.fill: parent
