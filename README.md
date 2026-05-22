@@ -4,7 +4,7 @@ get visual help at first hours of knowing that magnificent instrument of yours
 
 *multi-lingual : english | deutsch | français | español*
 
-***from player perspective***
+***buttonboards from player perspective***
 
 ### **installation**
 
