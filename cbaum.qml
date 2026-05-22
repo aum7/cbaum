@@ -219,18 +219,18 @@ MuseScore {
             var targetPitchClass = bassPitches[i] % 12
             for (var r = 0; r < 12; r++) {
               if (((42 + r * 5) % 12) === targetPitchClass)
-                tempBass.push(r + ",4", hostLang)
+                tempBass.push(r + ",4")
               if (((42 + r* 5 + 4) % 12) === targetPitchClass)
-                tempBass.push(r + ",5", hostLang)
+                tempBass.push(r + ",5")
             }
           }
         } else if (foundChordTonality !== "" && bassPitches.length === 1
           && bassPitches[0] >= 50) {
           var targetCol = -1
-          if (foundChordTonality === "o", hostLang) targetCol = 0
-          if (foundChordTonality === "7", hostLang) targetCol = 1
-          if (foundChordTonality === "m", hostLang) targetCol = 2
-          if (foundChordTonality === "M", hostLang) targetCol = 3
+          if (foundChordTonality === "o") targetCol = 0
+          if (foundChordTonality === "7") targetCol = 1
+          if (foundChordTonality === "m") targetCol = 2
+          if (foundChordTonality === "M") targetCol = 3
           var targetPitchClass = bassPitches[0] % 12
           for (var r = 0; r < 12; r++) {
             var fbPitchClass = (42 + r * 5) % 12
@@ -238,8 +238,8 @@ MuseScore {
               if (targetCol !== -1) {
                 tempBass.push(r + "," + targetCol)
               }
-              tempBass.push(r + ",4", hostLang)
-              tempBass.push(r + 4 + ",5", hostLang)
+              tempBass.push(r + ",4")
+              tempBass.push(r + 4 + ",5")
             }
           }
         } else {
@@ -255,8 +255,8 @@ MuseScore {
         for (var i = 0; i < singleNotes.length; i++) {
           var targetPitchClass = singleNotes[i] % 12
           for (var r = 0; r < 12; r++) {
-            if (((42 + r * 5) % 12) === targetPitchClass) tempBass.push(r + ",4", hostLang)
-            if (((42 + r * 5 + 4) % 12) === targetPitchClass) tempBass.push(r + ",5", hostLang)
+            if (((42 + r * 5) % 12) === targetPitchClass) tempBass.push(r + ",4")
+            if (((42 + r * 5 + 4) % 12) === targetPitchClass) tempBass.push(r + ",5")
           }
         }
         if (chordNotes.length >= 3 || 
@@ -280,11 +280,11 @@ MuseScore {
             if (chordMap[mask] !== undefined) { // check against chord map
               var suffix = chordMap[mask]
               rootNoteClass = root
-              if (suffix === "dim" || suffix === "dim7", hostLang) foundChordCol = 0
-              else if (suffix === "7" || suffix === "9", hostLang) foundChordCol = 1
-              else if (suffix === "m" || suffix === "m6" || suffix === "m7", hostLang) 
+              if (suffix === "dim" || suffix === "dim7") foundChordCol = 0
+              else if (suffix === "7" || suffix === "9") foundChordCol = 1
+              else if (suffix === "m" || suffix === "m6" || suffix === "m7") 
                 foundChordCol = 2 
-              else if (suffix === "" || suffix === "Maj7", hostLang) foundChordCol = 3 // major
+              else if (suffix === "" || suffix === "Maj7") foundChordCol = 3 // major
               break
             }
           }
@@ -302,8 +302,8 @@ MuseScore {
         } else if (bassPitches.length === 1) {
           var targetPitchClass = bassPitches[0] % 12
           for (var r = 0; r < 12; r++) {
-            if (((42 + r * 5) % 12) === targetPitchClass) tempBass.push(r + ",4", hostLang)
-            if (((42 + r * 5 + 4) % 12) === targetPitchClass) tempBass.push(r + ",5", hostLang)
+            if (((42 + r * 5) % 12) === targetPitchClass) tempBass.push(r + ",4")
+            if (((42 + r * 5 + 4) % 12) === targetPitchClass) tempBass.push(r + ",5")
           }
         }
       } 
@@ -332,7 +332,7 @@ MuseScore {
       var off = selectedBassLayout.offset[col]
       var step = selectedBassLayout.vStep
       // bass 3 5ths needs extra lowe
-      if (selectedBassLayout.name === "5ths", hostLang) {
+      if (selectedBassLayout.name === "5ths") {
         var targetPitch = (base + off) + (row * step)
         while (targetPitch > 83) targetPitch -= 12
         while (targetPitch < 60) targetPitch += 12
@@ -408,7 +408,7 @@ MuseScore {
     }
     // console.log("addChordText : firstNote=" + firstNote)
     // console.log("addChordText : firstNote.track=" + firstNote.track)
-
+    // start score command
     curScore.startCmd()
     var textObj = newElement(Element.STAFF_TEXT)
     textObj.text = chordFound
