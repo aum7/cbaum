@@ -1,12 +1,10 @@
-museScore qml plugin
-
-chromatic button accordion plugin
+# **museScore qml plugin for chromatic button accordion**
 
 get visual help at first hours of knowing that magnificent instrument of yours
 
-from player perspective
+**from player perspective**
 
-**installation**
+# **installation**
 
 download the plugin folder or clone repository
 
@@ -22,9 +20,12 @@ enable it via musescore plugin manager
 
 open museScore, plugins > manage plugins (or home > plugins ...), select the plugin, and click enable.
 
-license
+*made with mu4.7 & a lot of love*
+
+# license
 
 this project is licensed under the MIT license - see the LICENSE file for details.
+
 <table>
   <tr>
     <td><img src="imgs/cbaum-treble.png"></td>
