@@ -6,7 +6,7 @@ get visual help at first hours of knowing that magnificent instrument of yours
 
 from player perspective
 
-installation
+**installation**
 
 download the plugin folder or clone repository
 
@@ -24,7 +24,7 @@ open museScore, plugins > manage plugins (or home > plugins ...), select the plu
 
 license
 
-this project is licensed under the mit license - see the LICENSE file for details.
+this project is licensed under the MIT license - see the LICENSE file for details.
 <table>
   <tr>
     <td><img src="imgs/cbaum-treble.png"></td>
