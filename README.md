@@ -1,10 +1,10 @@
-# **museScore qml plugin for chromatic button accordion**
+## **mu4 plugin for chromatic button accordion**
 
 get visual help at first hours of knowing that magnificent instrument of yours
 
 **from player perspective**
 
-# **installation**
+## **installation**
 
 download the plugin folder or clone repository
 
@@ -22,7 +22,7 @@ open museScore, plugins > manage plugins (or home > plugins ...), select the plu
 
 *made with mu4.7 & a lot of love*
 
-# license
+## license
 
 this project is licensed under the MIT license - see the LICENSE file for details.
 
