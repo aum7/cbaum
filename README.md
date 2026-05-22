@@ -37,6 +37,8 @@ run via same path :
 
 * museScore > plugins > cbaum
 
+* hotkey : [alt+p+down arrow] > cbaum > [enter / return]
+
 *made with mu4.7 & a lot of hasLove - includes manyAsleeplesNights potion*
 
 *fair warning : **do not overuse***
