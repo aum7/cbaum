@@ -7,6 +7,8 @@
 //    visual notes-to-buttons presentation (collapsible)
 //    automatic selection of treble or bass
 // note: plugin size is fixed : fits hd 1920 x 1080
+// todo : early exit on 0 selection for fingering toggle
+//        simplify code, ie create component for toggle icons (.png)
 import MuseScore 3.0
 import QtQuick 2.15
 import QtQuick.Controls 2.15
@@ -59,7 +61,8 @@ MuseScore {
   property var bassBtnSpacing: 3
   property var bassBtnFontSize: 34
   // buttonboard treble layouts
-  property var trebleLayouts: [ // name, lowest note, offset from lowest = start MIDI
+  property var trebleLayouts: [
+    // name, lowest note, offset from lowest by 6 button columns
     { name: "C-griff Europe",start: 55, offset: [0, -1, 1, 0, 2] }, 
     { name: "C-griff 2", start: 56, offset: [3, 1, 2, 0, 1] },
     { name: "B-griff Bayan", start: 55, offset: [3, 1, 2, 0, 1] }, 
@@ -69,7 +72,8 @@ MuseScore {
   ]
   property var selectedTrebleLayout: trebleLayouts[0]
   // buttonboard bass layouts
-  property var bassLayouts: [ // name, lowest note, offset from lowest, step from previous
+  property var bassLayouts: [
+    // name, lowest note, offset from lowest, step from previous tonic
     // C-griff Europe mirror
     { name: "minor 3rds",start: 54, offset: [0, 1, 2, 3, 4], vStep: 3 },
     // speciality
@@ -93,7 +97,7 @@ MuseScore {
     "2193": "Maj7",   // Maj7
     "2065": "Maj7",   // Maj7 with dropped 5th
     "1161": "m7",     // m7
-    "1033": "m7",     // m7 with drepped 5th
+    "1033": "m7",     // m7 with dropped 5th
     "1097": "m7b5",   // m7b5
     "657":  "6",      // 6
     "649":  "m6",     // m6
