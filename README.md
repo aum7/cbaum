@@ -29,7 +29,8 @@ enable it via musescore plugin manager
 
 open museScore, plugins > manage plugins (or home > plugins ...), select the plugin, and click enable
 
-*made with mu4.7 & a lot of hasLove*
+*made with mu4.7 & a lot of hasLove - includes manyAsleeplesNights potion*
+*fair warning : **do not overuse***
 
 ### license
 
