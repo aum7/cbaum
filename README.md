@@ -2,9 +2,13 @@
 
 get visual help at first hours of knowing that magnificent instrument of yours
 
-*multi-lingual : english | deutsch | français | español*
-
-***buttonboards from player perspective***
+* *visual selected-notes-to-buttons presentation*
+* *automatic chord identifier*
+* *automatic selection of treble or bass*
+* *click-to-dock top or left*
+* *collapsible window for minimal score clutter*
+* ***buttonboards from player perspective***
+* *multi-lingual : english | deutsch | français | español*
 
 ### **installation**
 
@@ -22,7 +26,7 @@ enable it via musescore plugin manager
 
 open museScore, plugins > manage plugins (or home > plugins ...), select the plugin, and click enable
 
-*made with mu4.7 & a lot of love*
+*made with mu4.7 & a lot of hasLove*
 
 ### license
 

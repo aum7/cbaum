@@ -3,12 +3,17 @@
 // accordion with similar treble & bass layout
 // layouts are from player perspective
 // implemented :
-//    automatic chord identifier (fixed part) &
-//    visual notes-to-buttons presentation (collapsible)
+//    visual selected-notes-to-buttons presentation 
+//    automatic chord identifier
 //    automatic selection of treble or bass
+//    click-to-dock top or left
+//    collapsible window for minimal score clutter
+//    buttonboards from player perspective
+//    multi-lingual : english | deutsch | français | español
 // note: plugin size is fixed : fits hd 1920 x 1080
 // todo : early exit on 0 selection for fingering toggle
 //        simplify code, ie create component for toggle icons (.png)
+//        
 import MuseScore 3.0
 import QtQuick 2.15
 import QtQuick.Controls 2.15
@@ -19,10 +24,11 @@ import "translations/translations.js" as TR
 MuseScore {
   id: cbaplugin
   version: "1.0"
-  description: TR.translate("title", hostLang)
+  description: TR.trsl("title", hostLang)
   // translations
   property string hostLang: "en"
   property int expandedHeight: 836
+  property int expandedBassHeight: 725
   property int collapsedHeight: 57
   property var lastClickTime: 0
   property var doubleClickSpeed: 700
@@ -186,12 +192,18 @@ MuseScore {
           }
         }
       }
+      // ensure buttonboard height is correct on showTreble toggle
+      // todo : works ok without this block
+      // if (showButtonboard) {
+      //   cbaplugin.height = showTreble ?
+      //     expandedHeight : expandedBassHeight
+      // }
       // automatic chord identification
       var activeStaffPitches = showTreble ? tempTreble : bassPitches
       if (activeStaffPitches.length === 0) {
-        foundChordLbl.text = TR.translate("none", hostLang)
+        foundChordLbl.text = TR.trsl("none", hostLang)
       } else if (activeStaffPitches.length < 3) {
-        foundChordLbl.text = TR.translate("select_notes_3plus", hostLang)
+        foundChordLbl.text = TR.trsl("select_notes_3plus", hostLang)
       } else {
         // make sorted copy
         var sortedPitches = activeStaffPitches.slice().sort(function(a, b) {
@@ -383,7 +395,7 @@ MuseScore {
         return chordName
       }
     }
-    return TR.translate("unknown", hostLang)
+    return TR.trsl("unknown", hostLang)
   }
   // add staff text : identified chord
   function addChordText() {
@@ -598,11 +610,13 @@ MuseScore {
   Window {
     id: mainWindow
     // added spaces at end to align text in title bar
-    title: TR.translate("poland_layout", hostLang)
+    title: TR.trsl("poland_layout", hostLang)
     flags: Qt.Window | Qt.WindowMinimizeButtonHint | Qt.WindowCloseButtonHint |
       Qt.WindowStaysOnTopHint // | Qt.WindowTitleHint | Qt.WindowSystemMenuHint
     width: 300
-    height: showButtonboard ? expandedHeight : collapsedHeight
+    height: showButtonboard ?
+      (showTreble ? expandedHeight : expandedBassHeight) : 
+      collapsedHeight
     x: showButtonboard ? 0 : 970 // dock left if showing buttonboard
     y: showButtonboard ? 124 : 0  // dock top if not showing buttonboard
     visible: true
@@ -622,7 +636,7 @@ MuseScore {
         Label {
           id: foundChordLbl
           width: 250
-          text: TR.translate("none", hostLang)
+          text: TR.trsl("none", hostLang)
           horizontalAlignment: Text.AlignHCenter
           verticalAlignment: Text.AlignVCenter
           font.pixelSize: 22
@@ -630,7 +644,7 @@ MuseScore {
           color: "dodgerblue"
           // topPadding: 2
           fontSizeMode: Text.Fit
-          ToolTip.text: TR.translate("identify_chord_tooltip", hostLang)
+          ToolTip.text: TR.trsl("identify_chord_tooltip", hostLang)
           ToolTip.visible: showTooltips && chordLabelMArea.containsMouse 
           ToolTip.delay: tooltipDelay 
           MouseArea {
@@ -646,7 +660,7 @@ MuseScore {
           width: 26 
           height: 26 
           color: "transparent"
-          ToolTip.text: TR.translate("add_chord_to_notes", hostLang)
+          ToolTip.text: TR.trsl("add_chord_to_notes", hostLang)
           ToolTip.visible: showTooltips && addChordMArea.containsMouse 
           ToolTip.delay: tooltipDelay 
           MouseArea {
@@ -688,7 +702,7 @@ MuseScore {
           anchors.centerIn: parent
           color: toggleBtnBrdMArea.containsMouse ? highlight1 : "#3c3c3c"
         }
-        ToolTip.text: TR.translate("toggle_position", hostLang)
+        ToolTip.text: TR.trsl("toggle_position", hostLang)
         ToolTip.visible: showTooltips && toggleBtnBrdMArea.containsMouse 
         ToolTip.delay: tooltipDelay 
         MouseArea {
@@ -699,9 +713,12 @@ MuseScore {
           onClicked: {
             showButtonboard = !showButtonboard
             // toggle buttonboard visibility by plugin height
-            var targetHeight = showButtonboard ? expandedHeight : collapsedHeight
-            cbaplugin.height = targetHeight
-            mainWindow.height = targetHeight
+            cbaplugin.height = mainWindow.height
+            // var targetHeight = showButtonboard ? 
+            //   (showTreble ? expandedHeight : expandedBassHeight) :
+            //   collapsedHeight
+            // cbaplugin.height = targetHeight
+            // mainWindow.height = targetHeight
           }
         }
       }
@@ -724,7 +741,7 @@ MuseScore {
             width: iconSize 
             height: iconSize
             color: "transparent"
-            ToolTip.text: TR.translate("present_free_bass", hostLang)
+            ToolTip.text: TR.trsl("present_free_bass", hostLang)
             ToolTip.visible: showTooltips && meloBassMArea.containsMouse 
             ToolTip.delay: tooltipDelay 
             MouseArea {
@@ -758,7 +775,7 @@ MuseScore {
             width: iconSize 
             height: iconSize
             color: "transparent"
-            ToolTip.text: TR.translate("toggle_button_names", hostLang)
+            ToolTip.text: TR.trsl("toggle_button_names", hostLang)
             ToolTip.visible: showTooltips && buttonTonesMArea.containsMouse 
             ToolTip.delay: tooltipDelay 
             MouseArea {
@@ -792,7 +809,7 @@ MuseScore {
             width: iconSize 
             height: iconSize
             color: "transparent"
-            ToolTip.text: TR.translate("fingering_tooltip", hostLang)
+            ToolTip.text: TR.trsl("fingering_tooltip", hostLang)
             ToolTip.visible: showTooltips && fingerMArea.containsMouse
             ToolTip.delay: tooltipDelay 
             MouseArea {
@@ -841,7 +858,7 @@ MuseScore {
             width: iconSize 
             height: iconSize
             color: "transparent"
-            ToolTip.text: TR.translate("toggle_tooltips", hostLang)
+            ToolTip.text: TR.trsl("toggle_tooltips", hostLang)
             ToolTip.visible: showTooltips && tooltipsMArea.containsMouse 
             ToolTip.delay: tooltipDelay 
             MouseArea {
@@ -880,7 +897,7 @@ MuseScore {
           ComboBox { // treble selector
             id: trebleSelector
             width: comboWidth
-            ToolTip.text: TR.translate("select_treble_layout", hostLang)
+            ToolTip.text: TR.trsl("select_treble_layout", hostLang)
             ToolTip.visible: showTooltips && hovered
             ToolTip.delay: tooltipDelay 
             model: trebleLayouts
@@ -893,7 +910,7 @@ MuseScore {
             id: treble8veSelector
             width: 52
             currentIndex: 0 // set default model choice
-            ToolTip.text: TR.translate( "select_treble_8ve", hostLang)
+            ToolTip.text: TR.trsl( "select_treble_8ve", hostLang)
             ToolTip.visible: showTooltips && hovered
             ToolTip.delay: tooltipDelay 
             model: [0, -12, -24]
@@ -910,7 +927,7 @@ MuseScore {
           ComboBox { // bass selector
             id: bassSelector
             width: comboWidth 
-            ToolTip.text: TR.translate("select_bass_layout", hostLang)
+            ToolTip.text: TR.trsl("select_bass_layout", hostLang)
             ToolTip.visible: showTooltips && hovered
             ToolTip.delay: tooltipDelay 
             model: bassLayouts
@@ -923,7 +940,7 @@ MuseScore {
             id: bass8veSelector
             width: 52
             currentIndex: 2 // set default model choice
-            ToolTip.text: TR.translate("select_bass_8ve", hostLang)
+            ToolTip.text: TR.trsl("select_bass_8ve", hostLang)
             ToolTip.visible: showTooltips && hovered
             ToolTip.delay: tooltipDelay 
             model: [24, 12, 0, -12, -24]
