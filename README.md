@@ -4,10 +4,13 @@ get visual help at first hours of knowing that magnificent instrument of yours
 
 * *visual selected-notes-to-buttons presentation*
 * *automatic chord identifier*
-* *automatic selection of treble or bass*
+* *automatic selection of treble vs bass*
 * *click-to-dock top or left*
 * *collapsible window for minimal score clutter*
 * ***buttonboards from player perspective***
+* *6 treble & 5 bass layouts - modeled from poland fr 1 xb v-accordion*
+* *dark theme - eyes & wallet friendly*
+* ***0 (zero) carbon emission & 100 % recyclable***
 * *multi-lingual : english | deutsch | français | español*
 
 ### **installation**

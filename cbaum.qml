@@ -1,14 +1,15 @@
 // musescore 4.7 plugin - chromatic button accordion notes-to-buttons
-// based on roland fr 1 xb button v-accordion : can be used for any other
-// accordion with similar treble & bass layout
-// layouts are from player perspective
 // implemented :
 //    visual selected-notes-to-buttons presentation 
 //    automatic chord identifier
-//    automatic selection of treble or bass
+//    automatic selection of treble vs bass
 //    click-to-dock top or left
 //    collapsible window for minimal score clutter
 //    buttonboards from player perspective
+//    6 treble & 5 bass layouts - modeled from poland fr 1 xb v-accordion
+//    dark theme - eyes & wallet friendly
+//    0 (zero) carbon emission
+//    0 (zero) carbon emission & 100 % recyclable
 //    multi-lingual : english | deutsch | français | español
 // note: plugin size is fixed : fits hd 1920 x 1080
 // todo : early exit on 0 selection for fingering toggle
