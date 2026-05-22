@@ -4,7 +4,7 @@ get visual help at first hours of knowing that magnificent instrument of yours
 
 **from player perspective**
 
-## **installation**
+### **installation**
 
 download the plugin folder or clone repository
 
@@ -18,11 +18,11 @@ unzip it into your musescore plugins directory, ie :
 
 enable it via musescore plugin manager
 
-open museScore, plugins > manage plugins (or home > plugins ...), select the plugin, and click enable.
+open museScore, plugins > manage plugins (or home > plugins ...), select the plugin, and click enable
 
 *made with mu4.7 & a lot of love*
 
-## license
+### license
 
 this project is licensed under the MIT license - see the LICENSE file for details.
 
