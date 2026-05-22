@@ -25,9 +25,11 @@ unzip it into your musescore plugins directory, ie :
 
     linux: ~/Documents/MuseScore4/Plugins/
 
-enable it via musescore plugin manager
+enable via plugin manager :
 
-open museScore, plugins > manage plugins (or home > plugins ...), select the plugin, and click enable
+* in museScore > plugins > manage plugins (or home > plugins ...)
+* select the plugin
+* click enable
 
 *made with mu4.7 & a lot of hasLove - includes manyAsleeplesNights potion*
 *fair warning : **do not overuse***
