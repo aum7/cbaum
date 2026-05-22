@@ -13,22 +13,22 @@
      id="defs1" />
   <g
      id="layer1"
-     transform="translate(-0.23817498,-0.23817498)">
+     transform="translate(13.679389,0.1280764)">
     <circle
-       style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.638704;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
+       style="fill:none;fill-opacity:1;stroke:#ffffff;stroke-width:0.638704;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
        id="path6"
-       cx="6.3499999"
-       cy="6.3499999"
+       cx="-7.567564"
+       cy="5.9837484"
        r="5.7924728" />
     <text
        xml:space="preserve"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:11.0347px;font-family:'Ubuntu Mono';-inkscape-font-specification:'Ubuntu Mono';text-align:center;writing-mode:lr-tb;direction:ltr;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:0.291042;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
-       x="6.096199"
-       y="10.173524"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:11.0347px;font-family:'Ubuntu Mono';-inkscape-font-specification:'Ubuntu Mono';text-align:center;writing-mode:lr-tb;direction:ltr;text-anchor:middle;fill:#ffffff;fill-opacity:1;stroke:#ffffff;stroke-width:0.291042;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
+       x="-7.8213649"
+       y="9.807272"
        id="text6"><tspan
          id="tspan6"
-         style="fill:#000000;fill-opacity:1;stroke-width:0.291042;stroke-dasharray:none"
-         x="6.096199"
-         y="10.173524">F</tspan></text>
+         style="fill:#ffffff;fill-opacity:1;stroke:#ffffff;stroke-width:0.291042;stroke-dasharray:none;stroke-opacity:1"
+         x="-7.8213649"
+         y="9.807272">F</tspan></text>
   </g>
 </svg>

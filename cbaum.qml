@@ -10,23 +10,25 @@ import MuseScore 3.0
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Window 2.2
-// import QtQuick.VectorImage
+import QtQuick.VectorImage
 // import "translations/translations.js" as I18n
 
 MuseScore {
   id: cbaplugin
   version: "1.0"
   description: qsTr("chromatic button accordion visual helper with chord identifier")
-  // Component.onCompleted: {
-  //   var localeName = Qt.locale().name
-  //   var lang = localeName.split("_")[0]
-  //   console.log("cbaplugin : host language detected=", lang)
-  //   }
+  Component.onCompleted: {
+    var localeName = Qt.locale().name
+    var lang = localeName.split("_")[0]
+    console.log("cbaplugin host language=", lang)
+    }
   property int expandedHeight: 830
   property int collapsedHeight: 57
   property var lastClickTime: 0
   property var doubleClickSpeed: 700
   property var showTooltips: false
+  property int iconSize: 22
+  // property var imagesPath: "/imgs/"
   // toggle buttonboard visibility
   property bool showButtonboard: false 
   property int btnBoardHeight: 70
@@ -423,7 +425,7 @@ MuseScore {
   // fingering text : add | toggle visibility | change fingering on double click
   function hideFinger() {
     if (!curScore || curScore.selection.elements.length === 0) {
-      console.log("hideFinger : no score or nothing selected : exiting ...")
+      console.log("no score or nothing selected : exiting ...")
       return
     }
     // start command
@@ -688,7 +690,7 @@ MuseScore {
           }
         }
       }
-      // wrap row2 + row3 + row4 + buttonboard into container
+      // wrap row2 + ( row3 + row4 alternating) + buttonboard into container
       Column {
         id: buttonboard
         width: parent.width
@@ -733,42 +735,106 @@ MuseScore {
               verticalAlignment: Text.AlignVCenter
             }
           } 
-          // show fingering of selected notes
-          CheckBox {
-            id: fingerCbx
-            text: qsTr("fingering")
-            ToolTip.text: qsTr("add, change or hide fingering in treble part" +
-              "\nselect whole measures" +
-              "\ndouble-click to alternate fingering")
-            ToolTip.visible: showTooltips && hovered
-            ToolTip.delay: tooltipDelay 
-            checked: showFingering
-            onCheckedChanged: showFingering = checked
-            onClicked: {
-              var currentTime = new Date().getTime()
-              // detect double-click
-              if (currentTime - lastClickTime < doubleClickSpeed) {
-              console.log("onClicked : alternate fingering ...")
-              checked = true
-              calcFinger(true)
-              } else {
-                if (checked) {
-                  console.log("onClicked : initial fingering ...")
-                  calcFinger(false) // initial calculation
-                } else {
-                  console.log("onClicked : hiding fingering ...")
-                  hideFinger()
+          // show fingering of selected notes : custom toggle icon
+          Rectangle {
+            id: fingerRect
+            width: iconSize 
+            height: iconSize
+            radius: 3
+            color: "transparent"
+            // color: "#272727"
+            MouseArea {
+              id: fingerMArea
+              anchors.centerIn: parent
+              anchors.fill: parent
+              hoverEnabled: true
+              cursorShape: Qt.PointingHandCursor
+              // vector graphics
+              Image {
+                id: fingerImg
+                anchors.fill: parent
+                source: Qt.resolvedUrl("imgs/fingering.svg")
+                smooth: true
+                antialiasing: true
+                fillMode: Image.PreserveAspectFit
+                // color: "white"
+                // state: "defaultClr"
+                // states: [
+                //   State {
+                //     name: "hoverClr"
+                //     PropertyChanges { fingerRect.color: "#474747" }
+                //   },
+                //   State {
+                //     name: "clickClr"
+                //     PropertyChanges { fingerRect.color: "dodgerblue" }
+                //   },
+                //   State {
+                //     name: "defaultClr"
+                //     PropertyChanges { fingerRect.color: "white" }
+                //   }
+                // ]
+              }
+              // click handler
+              onClicked: {
+                showFingering = !showFingering
+                var currentTime = new Date().getTime()
+                // detect double-click
+                if (currentTime - lastClickTime < doubleClickSpeed) {
+                  console.log("alternate fingering ...")
+                  showFingering = true
+                  calcFinger(true)
+                  // state: "clickClr"
+                  } else {
+                    if (showFingering) {
+                      console.log("initial fingering ...")
+                      // showFingering = false
+                      calcFinger(false) // initial calculation
+                    } else {
+                      console.log("hiding fingering ...")
+                      // showFingering = false
+                      hideFinger()
+                    }
+                  }
+                  lastClickTime = currentTime
                 }
               }
-              lastClickTime = currentTime
             }
-            contentItem: Text {
-              text: parent.text
-              color: "white"
-              leftPadding: textLeftPadding
-              verticalAlignment: Text.AlignVCenter
-            } 
-          }
+          // }
+          // CheckBox {
+          //   id: fingerCbx
+          //   text: qsTr("fingering")
+          //   ToolTip.text: qsTr("add, hide or change fingering in treble part" +
+          //     "\nselect whole measures" +
+          //     "\ndouble-click to alternate fingering")
+          //   ToolTip.visible: showTooltips && hovered
+          //   ToolTip.delay: tooltipDelay 
+          //   checked: showFingering
+          //   onCheckedChanged: showFingering = checked
+          //   onClicked: {
+          //     var currentTime = new Date().getTime()
+          //     // detect double-click
+          //     if (currentTime - lastClickTime < doubleClickSpeed) {
+          //     console.log("onClicked : alternate fingering ...")
+          //     checked = true
+          //     calcFinger(true)
+          //     } else {
+          //       if (checked) {
+          //         console.log("onClicked : initial fingering ...")
+          //         calcFinger(false) // initial calculation
+          //       } else {
+          //         console.log("onClicked : hiding fingering ...")
+          //         hideFinger()
+          //       }
+          //     }
+          //     lastClickTime = currentTime
+          //   }
+          //   contentItem: Text {
+          //     text: parent.text
+          //     color: "white"
+          //     leftPadding: textLeftPadding
+          //     verticalAlignment: Text.AlignVCenter
+          //   } 
+          // }
           // toggle tooltip visibility
           CheckBox {
             text: qsTr("?")
