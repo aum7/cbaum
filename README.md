@@ -1,4 +1,6 @@
-## **mu4 plugin for chromatic button accordion**
+## **poland chroma-button-accordion**
+
+mu4 plugin for chromatic button accordion
 
 get visual help at first hours of knowing that magnificent instrument of yours
 
