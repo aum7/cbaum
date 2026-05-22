@@ -55,7 +55,7 @@ this project is licensed under the MIT license - see the LICENSE file for detail
   </tr>
   <tr>
     <td align="center">treble right</td>
-    <td align="center">bass stradella</td>
-    <td align="center">bass melodic / free bass</td>
+    <td align="center">bass left stradella</td>
+    <td align="center">bass left melodic / free bass</td>
   </tr>
 </table>
