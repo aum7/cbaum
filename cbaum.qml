@@ -8,18 +8,16 @@
 //    buttonboards from player perspective
 //    6 treble & 5 bass layouts - modeled from poland fr 1 xb v-accordion
 //    dark theme - eyes & wallet friendly
-//    0 (zero) carbon emission
 //    0 (zero) carbon emission & 100 % recyclable
 //    multi-lingual : english | deutsch | français | español
 // note: plugin size is fixed : fits hd 1920 x 1080
 // todo : early exit on 0 selection for fingering toggle
 //        simplify code, ie create component for toggle icons (.png)
-//        
+//        better proper fingering logic
 import MuseScore 3.0
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Window 2.2
-import QtQuick.VectorImage
 import "translations/translations.js" as TR
 
 MuseScore {
@@ -28,7 +26,7 @@ MuseScore {
   description: TR.trsl("title", hostLang)
   // translations
   property string hostLang: "en"
-  property int expandedHeight: 836
+  property int expandedTrebleHeight: 836
   property int expandedBassHeight: 725
   property int collapsedHeight: 57
   property var lastClickTime: 0
@@ -197,7 +195,7 @@ MuseScore {
       // todo : works ok without this block
       // if (showButtonboard) {
       //   cbaplugin.height = showTreble ?
-      //     expandedHeight : expandedBassHeight
+      //     expandedTrebleHeight : expandedBassHeight
       // }
       // automatic chord identification
       var activeStaffPitches = showTreble ? tempTreble : bassPitches
@@ -616,7 +614,7 @@ MuseScore {
       Qt.WindowStaysOnTopHint // | Qt.WindowTitleHint | Qt.WindowSystemMenuHint
     width: 300
     height: showButtonboard ?
-      (showTreble ? expandedHeight : expandedBassHeight) : 
+      (showTreble ? expandedTrebleHeight : expandedBassHeight) : 
       collapsedHeight
     x: showButtonboard ? 0 : 970 // dock left if showing buttonboard
     y: showButtonboard ? 124 : 0  // dock top if not showing buttonboard
@@ -716,7 +714,7 @@ MuseScore {
             // toggle buttonboard visibility by plugin height
             cbaplugin.height = mainWindow.height
             // var targetHeight = showButtonboard ? 
-            //   (showTreble ? expandedHeight : expandedBassHeight) :
+            //   (showTreble ? expandedTrebleHeight : expandedBassHeight) :
             //   collapsedHeight
             // cbaplugin.height = targetHeight
             // mainWindow.height = targetHeight

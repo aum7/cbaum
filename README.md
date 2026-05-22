@@ -17,11 +17,11 @@ get visual help at first hours of knowing that magnificent instrument of yours
 
 ### **installation**
 
-download the plugin folder or clone repository
+click above [<> code] button > download zip
 
-unzip it into your musescore plugins directory, ie :
+unzip into your musescore plugins directory, ie :
     
-    windows: C:\Users\[your user name]\Documents\MuseScore4\Plugins\
+    widows: C:\Users\[your user name]\Documents\MuseScore4\Plugins\
 
     macOS: ~/Documents/MuseScore4/Plugins/
 
