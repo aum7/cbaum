@@ -6,22 +6,20 @@
 //    automatic chord identifier (fixed part) &
 //    visual notes-to-buttons presentation (collapsible)
 //    automatic selection of treble or bass
+// note: plugin size is fixed : fits hd 1920 x 1080
 import MuseScore 3.0
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Window 2.2
 import QtQuick.VectorImage
-// import "translations/translations.js" as I18n
+import "translations/translations.js" as TR
 
 MuseScore {
   id: cbaplugin
   version: "1.0"
-  description: qsTr("chromatic button accordion visual helper with chord identifier")
-  Component.onCompleted: {
-    var localeName = Qt.locale().name
-    var lang = localeName.split("_")[0]
-    console.log("cbaplugin host language=", lang)
-    }
+  description: TR.translate("title", hostLang)
+  // translations
+  property string hostLang: "en"
   property int expandedHeight: 836
   property int collapsedHeight: 57
   property var lastClickTime: 0
@@ -105,6 +103,12 @@ MuseScore {
     "141":  "sus2",   // sus2
     "1185": "7sus4"   // 7sus4
   }
+  // dynamic injection of translations
+  Component.onCompleted: {
+    var localeName = Qt.locale().name
+    hostLang = localeName.split("_")[0]
+    console.log("cbaplugin host language=", hostLang)
+    }
   // monitor score selection
   Timer {
     interval: 200
@@ -155,13 +159,17 @@ MuseScore {
                       var chordMatch = annTxt.match(/^[A-G][#b♮♯♭]?(.*)$/i)
                       if (chordMatch) {
                         var suffix = chordMatch[1].trim().toLowerCase()
-                        if (suffix.indexOf("dim") !== -1 || suffix.indexOf("o") !== -1) {
+                        if (suffix.indexOf("dim") !== -1 ||
+                          suffix.indexOf("o") !== -1) {
                           foundChordTonality = "o"
-                        } else if (suffix.indexOf("7") !== -1 || suffix.indexOf("9") !== -1) {
+                        } else if (suffix.indexOf("7") !== -1 ||
+                          suffix.indexOf("9") !== -1) {
                           foundChordTonality = "7"
-                        } else if (suffix.indexOf("m") === 0 || suffix.indexOf("min") === 0) {
+                        } else if (suffix.indexOf("m") === 0 ||
+                          suffix.indexOf("min") === 0) {
                           foundChordTonality = "m"
-                        } else if (suffix === "" || suffix.indexOf("maj") === 0 ||
+                        } else if (suffix === "" ||
+                          suffix.indexOf("maj") === 0 ||
                           suffix === "M") {
                           foundChordTonality = "M"
                         }
@@ -177,12 +185,14 @@ MuseScore {
       // automatic chord identification
       var activeStaffPitches = showTreble ? tempTreble : bassPitches
       if (activeStaffPitches.length === 0) {
-        foundChordLbl.text = qsTr("none")
+        foundChordLbl.text = TR.translate("none", hostLang)
       } else if (activeStaffPitches.length < 3) {
-        foundChordLbl.text = qsTr("select 3+ notes")
+        foundChordLbl.text = TR.translate("select_notes_3plus", hostLang)
       } else {
         // make sorted copy
-        var sortedPitches = activeStaffPitches.slice().sort(function(a, b) { return a - b })
+        var sortedPitches = activeStaffPitches.slice().sort(function(a, b) {
+          return a - b
+        })
         foundChordLbl.text = identifyChord(sortedPitches)
       }
       if (foundChordTonality !== "") {
@@ -208,17 +218,19 @@ MuseScore {
           for (var i = 0; i < bassPitches.length; i++) {
             var targetPitchClass = bassPitches[i] % 12
             for (var r = 0; r < 12; r++) {
-              if (((42 + r * 5) % 12) === targetPitchClass) tempBass.push(r + ",4")
-              if (((42 + r* 5 + 4) % 12) === targetPitchClass) tempBass.push(r + ",5")
+              if (((42 + r * 5) % 12) === targetPitchClass)
+                tempBass.push(r + ",4", hostLang)
+              if (((42 + r* 5 + 4) % 12) === targetPitchClass)
+                tempBass.push(r + ",5", hostLang)
             }
           }
         } else if (foundChordTonality !== "" && bassPitches.length === 1
           && bassPitches[0] >= 50) {
           var targetCol = -1
-          if (foundChordTonality === "o") targetCol = 0
-          if (foundChordTonality === "7") targetCol = 1
-          if (foundChordTonality === "m") targetCol = 2
-          if (foundChordTonality === "M") targetCol = 3
+          if (foundChordTonality === "o", hostLang) targetCol = 0
+          if (foundChordTonality === "7", hostLang) targetCol = 1
+          if (foundChordTonality === "m", hostLang) targetCol = 2
+          if (foundChordTonality === "M", hostLang) targetCol = 3
           var targetPitchClass = bassPitches[0] % 12
           for (var r = 0; r < 12; r++) {
             var fbPitchClass = (42 + r * 5) % 12
@@ -226,8 +238,8 @@ MuseScore {
               if (targetCol !== -1) {
                 tempBass.push(r + "," + targetCol)
               }
-              tempBass.push(r + ",4")
-              tempBass.push(r + 4 + ",5")
+              tempBass.push(r + ",4", hostLang)
+              tempBass.push(r + 4 + ",5", hostLang)
             }
           }
         } else {
@@ -243,8 +255,8 @@ MuseScore {
         for (var i = 0; i < singleNotes.length; i++) {
           var targetPitchClass = singleNotes[i] % 12
           for (var r = 0; r < 12; r++) {
-            if (((42 + r * 5) % 12) === targetPitchClass) tempBass.push(r + ",4")
-            if (((42 + r * 5 + 4) % 12) === targetPitchClass) tempBass.push(r + ",5")
+            if (((42 + r * 5) % 12) === targetPitchClass) tempBass.push(r + ",4", hostLang)
+            if (((42 + r * 5 + 4) % 12) === targetPitchClass) tempBass.push(r + ",5", hostLang)
           }
         }
         if (chordNotes.length >= 3 || 
@@ -268,11 +280,11 @@ MuseScore {
             if (chordMap[mask] !== undefined) { // check against chord map
               var suffix = chordMap[mask]
               rootNoteClass = root
-              if (suffix === "dim" || suffix === "dim7") foundChordCol = 0
-              else if (suffix === "7" || suffix === "9") foundChordCol = 1
-              else if (suffix === "m" || suffix === "m6" || suffix === "m7") 
+              if (suffix === "dim" || suffix === "dim7", hostLang) foundChordCol = 0
+              else if (suffix === "7" || suffix === "9", hostLang) foundChordCol = 1
+              else if (suffix === "m" || suffix === "m6" || suffix === "m7", hostLang) 
                 foundChordCol = 2 
-              else if (suffix === "" || suffix === "Maj7") foundChordCol = 3 // major
+              else if (suffix === "" || suffix === "Maj7", hostLang) foundChordCol = 3 // major
               break
             }
           }
@@ -290,8 +302,8 @@ MuseScore {
         } else if (bassPitches.length === 1) {
           var targetPitchClass = bassPitches[0] % 12
           for (var r = 0; r < 12; r++) {
-            if (((42 + r * 5) % 12) === targetPitchClass) tempBass.push(r + ",4")
-            if (((42 + r * 5 + 4) % 12) === targetPitchClass) tempBass.push(r + ",5")
+            if (((42 + r * 5) % 12) === targetPitchClass) tempBass.push(r + ",4", hostLang)
+            if (((42 + r * 5 + 4) % 12) === targetPitchClass) tempBass.push(r + ",5", hostLang)
           }
         }
       } 
@@ -320,7 +332,7 @@ MuseScore {
       var off = selectedBassLayout.offset[col]
       var step = selectedBassLayout.vStep
       // bass 3 5ths needs extra lowe
-      if (selectedBassLayout.name === "5ths") {
+      if (selectedBassLayout.name === "5ths", hostLang) {
         var targetPitch = (base + off) + (row * step)
         while (targetPitch > 83) targetPitch -= 12
         while (targetPitch < 60) targetPitch += 12
@@ -367,11 +379,11 @@ MuseScore {
         return chordName
       }
     }
-    return qsTr("unknown")
+    return TR.translate("unknown", hostLang)
   }
   // add staff text : identified chord
   function addChordText() {
-    // console.log(qsTr("adding chord text to selected notes"))
+    // console.log("adding chord text to selected notes")
     var chordFound = foundChordLbl.text
     if (!chordFound || 
       chordFound === "none" || 
@@ -379,7 +391,7 @@ MuseScore {
       chordFound.indexOf("select") !== -1) return
     var selection = curScore.selection.elements
     if (selection.length === 0) {
-      console.log("[addChordText] nothing selected : exiting ...")
+      console.log("nothing selected : exiting ...")
       return
     }
     // find 1st note of chord to get valid segment
@@ -391,7 +403,7 @@ MuseScore {
       }
     }
     if (!firstNote) {
-      console.log("[addChordText] no firstNote : exiting ...")
+      console.log("no firstNote : exiting ...")
       return
     }
     // console.log("addChordText : firstNote=" + firstNote)
@@ -402,7 +414,7 @@ MuseScore {
     textObj.text = chordFound
     var cursor = curScore.newCursor()
     cursor.track = firstNote.track  // point auto-assigned track
-    console.log("addChordText : cursor.track=" + cursor.track)
+    // console.log("addChordText : cursor.track=" + cursor.track)
     cursor.rewind(0) // (Cursor.SELECTION_START)  // start of score
     var targetTick = firstNote.parent.parent.tick
     // fast forward
@@ -450,12 +462,12 @@ MuseScore {
   // collect notes data
   function calcFinger(requestAlternate) {
     if (!curScore || curScore.selection.elements.length === 0) {
-      console.log("calcFinger : no score or nothing selected : exiting ...")
+      console.log("no score or nothing selected : exiting ...")
       return
     }
     var sel = curScore.selection
     if (!sel.startSegment || !sel.endSegment) {
-      console.log("calcFinger : active selection has no proper start / end segments")
+      console.log("active selection has no proper start / end segments")
       return
     }
     // wrap into commmand
@@ -582,7 +594,7 @@ MuseScore {
   Window {
     id: mainWindow
     // added spaces at end to align text in title bar
-    title: qsTr("poland chroma-button-accordion      ")
+    title: TR.translate("poland_layout", hostLang)
     flags: Qt.Window | Qt.WindowMinimizeButtonHint | Qt.WindowCloseButtonHint |
       Qt.WindowStaysOnTopHint // | Qt.WindowTitleHint | Qt.WindowSystemMenuHint
     width: 300
@@ -606,7 +618,7 @@ MuseScore {
         Label {
           id: foundChordLbl
           width: 250
-          text: qsTr("none")
+          text: TR.translate("none", hostLang)
           horizontalAlignment: Text.AlignHCenter
           verticalAlignment: Text.AlignVCenter
           font.pixelSize: 22
@@ -614,9 +626,7 @@ MuseScore {
           color: "dodgerblue"
           // topPadding: 2
           fontSizeMode: Text.Fit
-          ToolTip.text: qsTr("identify chord from selected notes - min 3" +
-            "\ndouble-click any chord note to select chord" +
-            "\ncan be added to selected notes")
+          ToolTip.text: TR.translate("identify_chord_tooltip", hostLang)
           ToolTip.visible: showTooltips && chordLabelMArea.containsMouse 
           ToolTip.delay: tooltipDelay 
           MouseArea {
@@ -632,7 +642,7 @@ MuseScore {
           width: 26 
           height: 26 
           color: "transparent"
-          ToolTip.text: qsTr("add identified chord to selected notes")
+          ToolTip.text: TR.translate("add_chord_to_notes", hostLang)
           ToolTip.visible: showTooltips && addChordMArea.containsMouse 
           ToolTip.delay: tooltipDelay 
           MouseArea {
@@ -674,7 +684,7 @@ MuseScore {
           anchors.centerIn: parent
           color: toggleBtnBrdMArea.containsMouse ? highlight1 : "#3c3c3c"
         }
-        ToolTip.text: qsTr("toggle plugin position")
+        ToolTip.text: TR.translate("toggle_position", hostLang)
         ToolTip.visible: showTooltips && toggleBtnBrdMArea.containsMouse 
         ToolTip.delay: tooltipDelay 
         MouseArea {
@@ -710,8 +720,7 @@ MuseScore {
             width: iconSize 
             height: iconSize
             color: "transparent"
-            ToolTip.text: qsTr("present as melodic / free bass" +
-              "\nvs default stradella bass")
+            ToolTip.text: TR.translate("present_free_bass", hostLang)
             ToolTip.visible: showTooltips && meloBassMArea.containsMouse 
             ToolTip.delay: tooltipDelay 
             MouseArea {
@@ -745,7 +754,7 @@ MuseScore {
             width: iconSize 
             height: iconSize
             color: "transparent"
-            ToolTip.text: qsTr("toggle button names")
+            ToolTip.text: TR.translate("toggle_button_names", hostLang)
             ToolTip.visible: showTooltips && buttonTonesMArea.containsMouse 
             ToolTip.delay: tooltipDelay 
             MouseArea {
@@ -779,9 +788,7 @@ MuseScore {
             width: iconSize 
             height: iconSize
             color: "transparent"
-            ToolTip.text: qsTr("add, hide or change fingering in treble part" +
-              "\nselect whole measures" +
-              "\ndouble-click to alternate fingering")
+            ToolTip.text: TR.translate("fingering_tooltip", hostLang)
             ToolTip.visible: showTooltips && fingerMArea.containsMouse
             ToolTip.delay: tooltipDelay 
             MouseArea {
@@ -830,8 +837,7 @@ MuseScore {
             width: iconSize 
             height: iconSize
             color: "transparent"
-            ToolTip.text: qsTr("toggle tooltips visibility" +
-              "\nhover mouse over elements")
+            ToolTip.text: TR.translate("toggle_tooltips", hostLang)
             ToolTip.visible: showTooltips && tooltipsMArea.containsMouse 
             ToolTip.delay: tooltipDelay 
             MouseArea {
@@ -870,18 +876,20 @@ MuseScore {
           ComboBox { // treble selector
             id: trebleSelector
             width: comboWidth
-            ToolTip.text: qsTr("select treble layout")
+            ToolTip.text: TR.translate("select_treble_layout", hostLang)
             ToolTip.visible: showTooltips && hovered
             ToolTip.delay: tooltipDelay 
             model: trebleLayouts
             textRole: "name"
-            onActivated: function(index) { selectedTrebleLayout = trebleLayouts[index] }
+            onActivated: function(index) {
+              selectedTrebleLayout = trebleLayouts[index]
+            }
           }
           ComboBox { // treble 8ve selector
             id: treble8veSelector
             width: 52
             currentIndex: 0 // set default model choice
-            ToolTip.text: qsTr("select treble 8ve\n0=3rd | -12=2nd | -24=1st")
+            ToolTip.text: TR.translate( "select_treble_8ve", hostLang)
             ToolTip.visible: showTooltips && hovered
             ToolTip.delay: tooltipDelay 
             model: [0, -12, -24]
@@ -898,19 +906,20 @@ MuseScore {
           ComboBox { // bass selector
             id: bassSelector
             width: comboWidth 
-            ToolTip.text: qsTr("select bass layout")
+            ToolTip.text: TR.translate("select_bass_layout", hostLang)
             ToolTip.visible: showTooltips && hovered
             ToolTip.delay: tooltipDelay 
             model: bassLayouts
             textRole: "name"
-            onActivated: function(index) { selectedBassLayout = bassLayouts[index] }
+            onActivated: function(index) {
+              selectedBassLayout = bassLayouts[index]
+            }
           }
           ComboBox { // 8ve selector
             id: bass8veSelector
             width: 52
             currentIndex: 2 // set default model choice
-            ToolTip.text: qsTr("select bass 8ve\n24=5th | .. | 0=3rd | .. | -24=1st" +
-              "\nfor melodic / free bass only")
+            ToolTip.text: TR.translate("select_bass_8ve", hostLang)
             ToolTip.visible: showTooltips && hovered
             ToolTip.delay: tooltipDelay 
             model: [24, 12, 0, -12, -24]

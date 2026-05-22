@@ -4,115 +4,142 @@
 <context>
     <name>cbaum</name>
     <message>
-        <location filename="../cbaum.qml" line="18"/>
+        <location filename="../cbaum.qml" line="20"/>
         <source>chromatic button accordion visual helper with chord identifier</source>
         <translation>assistant visuel pour accordéon chromatique à boutons avec identificateur d&apos;accord</translation>
     </message>
     <message>
-        <location filename="../cbaum.qml" line="514"/>
+        <location filename="../cbaum.qml" line="371"/>
         <source>unknown</source>
         <translation>inconnu</translation>
     </message>
     <message>
-        <location filename="../cbaum.qml" line="519"/>
         <source>no score opened</source>
-        <translation>aucune partition ouverte</translation>
+        <translation type="vanished">aucune partition ouverte</translation>
     </message>
     <message>
-        <location filename="../cbaum.qml" line="528"/>
+        <location filename="../cbaum.qml" line="183"/>
         <source>select 3+ notes</source>
         <translation>sélectionner 3+ notes</translation>
     </message>
     <message>
-        <location filename="../cbaum.qml" line="587"/>
+        <location filename="../cbaum.qml" line="586"/>
         <source>poland chroma-button-accordion      </source>
         <translation>poland accordéon-chroma-boutons      </translation>
     </message>
     <message>
-        <location filename="../cbaum.qml" line="611"/>
         <source>get chord</source>
         <extracomment>get musical chord - harmonic notes</extracomment>
-        <translation>obtenir l&apos;accord</translation>
+        <translation type="vanished">obtenir l&apos;accord</translation>
     </message>
     <message>
-        <location filename="../cbaum.qml" line="612"/>
         <source>get chord from selected notes - min 3
 can be added to selected notes
 notes need be shift-selected, ie have square
 ctrl-selected notes will not work</source>
-        <translation>obtenir l&apos;accord des notes sélectionnées - min 3
+        <translation type="vanished">obtenir l&apos;accord des notes sélectionnées - min 3
 peut être ajouté aux notes sélectionnées
 les notes doivent être sélectionnées avec maj, c.-à-d. avoir un carré
 les notes sélectionnées avec ctrl ne fonctionneront pas</translation>
     </message>
     <message>
-        <location filename="../cbaum.qml" line="622"/>
+        <location filename="../cbaum.qml" line="181"/>
+        <location filename="../cbaum.qml" line="610"/>
         <source>none</source>
         <translation>aucun</translation>
     </message>
     <message>
-        <location filename="../cbaum.qml" line="634"/>
         <source>add as text</source>
-        <translation>ajouter texte</translation>
+        <translation type="vanished">ajouter texte</translation>
     </message>
     <message>
-        <location filename="../cbaum.qml" line="635"/>
+        <location filename="../cbaum.qml" line="636"/>
         <source>add identified chord to selected notes</source>
         <translation>ajouter l&apos;accord identifié aux notes sélectionnées</translation>
     </message>
     <message>
-        <location filename="../cbaum.qml" line="684"/>
         <source>MB</source>
-        <translation>MB</translation>
+        <translation type="vanished">MB</translation>
     </message>
     <message>
-        <location filename="../cbaum.qml" line="687"/>
         <source>present as melodic / free bass chord
 vs default stradella bass</source>
-        <translation>présenter comme accord de basse libre
+        <translation type="vanished">présenter comme accord de basse libre
 contre basse stradella par défaut</translation>
     </message>
     <message>
-        <location filename="../cbaum.qml" line="700"/>
         <source>tones</source>
-        <translation>notes</translation>
+        <translation type="vanished">notes</translation>
     </message>
     <message>
-        <location filename="../cbaum.qml" line="701"/>
         <source>show tone names on buttons</source>
-        <translation>afficher le nom des notes des boutons</translation>
+        <translation type="vanished">afficher le nom des notes des boutons</translation>
     </message>
     <message>
-        <location filename="../cbaum.qml" line="716"/>
         <source>fingering</source>
-        <translation>doigté</translation>
+        <translation type="vanished">doigté</translation>
     </message>
     <message>
-        <location filename="../cbaum.qml" line="717"/>
         <source>add, change or hide fingering in treble part
 double-click to alternate fingering</source>
-        <translation>ajouter, modifier ou masquer le doigté dans la partie chant
+        <translation type="vanished">ajouter, modifier ou masquer le doigté dans la partie chant
 double-cliquer pour alterner le doigté</translation>
     </message>
     <message>
-        <location filename="../cbaum.qml" line="758"/>
+        <location filename="../cbaum.qml" line="618"/>
+        <source>identify chord from selected notes - min 3
+double-click any chord note to select chord
+can be added to selected notes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../cbaum.qml" line="678"/>
+        <source>toggle plugin position</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../cbaum.qml" line="714"/>
+        <source>present as melodic / free bass
+vs default stradella bass</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../cbaum.qml" line="749"/>
+        <source>toggle button names</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../cbaum.qml" line="783"/>
+        <source>add, hide or change fingering in treble part
+select whole measures
+double-click to alternate fingering</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../cbaum.qml" line="834"/>
+        <source>toggle tooltips visibility
+hover mouse over elements</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../cbaum.qml" line="874"/>
         <source>select treble layout</source>
         <translation>sélectionner la disposition du chant</translation>
     </message>
     <message>
-        <location filename="../cbaum.qml" line="769"/>
+        <location filename="../cbaum.qml" line="885"/>
         <source>select treble 8ve
 0=3rd | -12=2nd | -24=1st</source>
         <translation>sélectionner l&apos;8ve du chant
 0=3e | -12=2e | -24=1re</translation>
     </message>
     <message>
-        <location filename="../cbaum.qml" line="785"/>
+        <location filename="../cbaum.qml" line="902"/>
         <source>select bass layout</source>
         <translation>sélectionner la disposition de la basse</translation>
     </message>
     <message>
-        <location filename="../cbaum.qml" line="796"/>
+        <location filename="../cbaum.qml" line="913"/>
         <source>select bass 8ve
 24=5th | .. | 0=3rd | .. | -24=1st
 for melodic / free bass only</source>

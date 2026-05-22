@@ -29,7 +29,7 @@ this project is licensed under the mit license - see the LICENSE file for detail
   <tr>
     <td><img src="imgs/cbaum-treble.png"></td>
     <td><img src="imgs/cbaum-bass-stradella.png"></td>
-    <td><img src="imgs/cbaum-bass-melo.png"></td>
+    <td><img src="imgs/cbaum-bass-melodic.png"></td>
   </tr>
   <tr>
     <td align="center">treble right</td>
