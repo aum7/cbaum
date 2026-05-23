@@ -35,7 +35,7 @@ MuseScore {
   property var showTooltips: false
   property int iconSize: 30 
   // toggle buttonboard visibility
-  property bool showButtonboard: true 
+  property bool showButtonboard: false
   property int comboWidth: 110
   // color configuration
   readonly property color darkTheme: "#1a1a1a"
