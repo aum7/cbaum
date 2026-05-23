@@ -32,10 +32,10 @@ MuseScore {
   property int collapsedHeight: 57
   property var lastClickTime: 0
   property var doubleClickSpeed: 700
-  property var showTooltips: false
   property int iconSize: 30 
   // toggle buttonboard visibility
   property bool showButtonboard: false
+  property bool showTreble: false
   property int comboWidth: 110
   // color configuration
   readonly property color darkTheme: "#1a1a1a"
@@ -47,10 +47,10 @@ MuseScore {
   property var trebleActivePitches: []
   property var bassActivePitches: []
   // buttonboard options
-  property bool meloBassMode: true
+  property bool meloBassMode: false 
   property bool showButtonTones: true 
   property bool showFingering: false
-  property bool showTreble: false
+  property var showTooltips: false
   // range shift
   property int treble8veShift: 0
   property int bass8veShift: 2
