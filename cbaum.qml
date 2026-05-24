@@ -94,7 +94,7 @@ MuseScore {
     // basic
     "145":  "",       // major
     "137":  "m",      // minor
-    "273":  "aug",    // aug
+    "273":  "a",    // aug
     "73":   "o",    // dim
     "585":  "o7",   // dim7
     // 7s & 6s
