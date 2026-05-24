@@ -95,13 +95,13 @@ MuseScore {
     "145":  "",       // major
     "137":  "m",      // minor
     "273":  "aug",    // aug
-    "73":   "dim",    // dim
-    "585":  "dim7",   // dim7
+    "73":   "o",    // dim
+    "585":  "o7",   // dim7
     // 7s & 6s
     "1169": "7",      // 7
     "1041": "7",      // 7 with dropped 5th
-    "2193": "Maj7",   // Maj7
-    "2065": "Maj7",   // Maj7 with dropped 5th
+    "2193": "M7",   // Maj7
+    "2065": "M7",   // Maj7 with dropped 5th
     "1161": "m7",     // m7
     "1033": "m7",     // m7 with dropped 5th
     "1097": "m7b5",   // m7b5
@@ -109,9 +109,9 @@ MuseScore {
     "649":  "m6",     // m6
     "1173": "9",      // 9
     // suspended
-    "161":  "sus4",   // sus4
-    "141":  "sus2",   // sus2
-    "1185": "7sus4"   // 7sus4
+    "161":  "s4",   // sus4
+    "141":  "s2",   // sus2
+    "1185": "7s4"   // 7sus4
   }
   // dynamic injection of translations
   Component.onCompleted: {
