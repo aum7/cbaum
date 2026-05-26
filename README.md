@@ -39,7 +39,10 @@ run via same path :
 
 * hotkey : [alt+p+down arrow] > cbaum > [enter / return]
 
-*made with mu4.7 & a lot of hasLove - includes manyAsleeplesNights potion*
+* toggle [ ? ] button for manual as mouse-hover tooltips
+
+
+*made with mu4.7 & a lot of hasLove - includes manyAsleeplessNights potion*
 
 *fair warning : **do not overuse***
 
