@@ -31,7 +31,7 @@ unzip into your musescore plugins directory, ie :
 enable via plugin manager :
 
 * in museScore > plugins > manage plugins (or home > plugins ...)
-* disabled > select cbaum plugin & click enable
+* disabled > select cbaum plugin & click [enable]
 
 run via same path :
 
